@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+
+  <!--
+    viewport meta tag: This makes the page look correct on phones.
+    Without it, mobile browsers zoom out and show a tiny desktop layout.
+    "width=device-width" tells the browser to use the actual screen width.
+    "initial-scale=1" means don't zoom in or out at the start.
+  -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Ninjas Soccer — Spring 2026</title>
+
+  <!--
+    ============================================================
+    STYLES
+    All CSS lives here in a <style> tag for simplicity.
+    In larger projects you'd put this in a separate style.css file.
+    ============================================================
+  -->
+  <style>
+
+    /* ===== CSS VARIABLES =================================
+       Define our team colors and reusable values in one place.
+       Later in the file we use var(--red) instead of repeating
+       the hex code everywhere. Makes it easy to tweak the theme.
+    ====================================================== */
+    :root {
+      --red:        #cc1122;   /* main team red */
+      --red-dark:   #991122;   /* darker red for hover states */
+      --black:      #111111;   /* near-black for text and backgrounds */
+      --white:      #ffffff;
+      --gray-light: #f4f4f4;   /* subtle background for alternating rows */
+      --gray-mid:   #dddddd;   /* borders */
+      --radius:     8px;       /* consistent rounded corners */
+    }
+
+    /* ===== RESET & BASE STYLES ==========================
+       Browsers have built-in default styles that differ between
+       Chrome, Firefox, Safari, etc. This small reset smooths
+       those out so our design looks consistent everywhere.
+    ====================================================== */
+    *, *::before, *::after {
+      /* box-sizing: border-box means padding and border are
+         included in an element's width — much easier to lay out */
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      /* system-ui uses whatever the OS's default UI font is:
+         San Francisco on Mac/iPhone, Roboto on Android, Segoe UI
+         on Windows. Looks native and loads instantly. */
+      background-color: #e8e8e8;
+      color: var(--black);
+      line-height: 1.5; /* slightly loose line spacing for readability */
+    }
+
+    /* ===== LAYOUT WRAPPER ================================
+       Centers content on wide screens and adds side padding
+       so text doesn't slam against phone edges.
+    ====================================================== */
+    .page-wrapper {
+      max-width: 680px;    /* comfortable reading width on desktop */
+      margin: 0 auto;      /* auto left/right margins = centered */
+      padding: 0 16px 40px;
+    }
+
+    /* ===== HEADER ========================================
+       The top banner. We use a gradient (two reds) instead
+       of a flat color to give it a little energy.
+    ====================================================== */
+    header {
+      background: linear-gradient(135deg, var(--red) 0%, var(--red-dark) 100%);
+      color: var(--white);
+      text-align: center;
+      padding: 32px 16px 24px;
+      margin-bottom: 24px;
+
+      /* Extend the header edge-to-edge by canceling the wrapper's
+         16px side padding with a negative margin trick */
+      margin-left: -16px;
+      margin-right: -16px;
+    }
+
+    .header-emoji {
+      font-size: 3rem;    /* rem = relative to root font size; 3rem ≈ 48px */
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .team-name {
+      font-size: 3rem;
+      font-weight: 900;   /* extra bold */
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      text-shadow: 2px 2px 6px rgba(0,0,0,0.4);
+    }
+
+    .season-label {
+      font-size: 1rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      opacity: 0.85;
+      margin-top: 6px;
+    }
+
+    .district-label {
+      font-size: 0.85rem;
+      opacity: 0.7;
+      margin-top: 4px;
+    }
+
+    /* ===== SECTION CARDS =================================
+       Each content section (roster, last game, stats) is wrapped
+       in a "card" — a white box with a shadow to lift it off
+       the gray background.
+    ====================================================== */
+    .card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+
+      /* box-shadow: [x-offset] [y-offset] [blur] [spread] [color]
+         This creates a subtle drop shadow beneath each card. */
+      box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+    }
+
+    /* ===== SECTION HEADINGS ==============================
+       A red left border accent + bold uppercase label.
+       The border-left gives a sporty "stripe" feel.
+    ====================================================== */
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--red);
+      border-left: 4px solid var(--red);
+      padding-left: 10px;
+      margin-bottom: 16px;
+    }
+
+    /* ===== TABLES ========================================
+       Both the roster and stats sections use HTML tables.
+       "width: 100%" makes tables fill their card.
+       "border-collapse: collapse" removes the double-border
+       that appears between adjacent table cells by default.
+    ====================================================== */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    /* Table header cells */
+    thead th {
+      background-color: var(--black);
+      color: var(--white);
+      text-align: left;
+      padding: 10px 12px;
+      font-size: 0.75rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* Round the top corners of the table header */
+    thead th:first-child { border-radius: var(--radius) 0 0 0; }
+    thead th:last-child  { border-radius: 0 var(--radius) 0 0; }
+
+    /* Table body cells */
+    tbody td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--gray-mid);
+      vertical-align: middle;
+    }
+
+    /* Remove border from the last row so it doesn't double up
+       with the card's bottom padding */
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Alternating row backgrounds (zebra striping) make long
+       tables easier to read across a row */
+    tbody tr:nth-child(even) {
+      background-color: var(--gray-light);
+    }
+
+    /* Subtle highlight when hovering over a row */
+    tbody tr:hover {
+      background-color: #fde8ea;  /* very light red tint */
+    }
+
+    /* Center-align number columns (jersey #, goals, assists) */
+    .col-center {
+      text-align: center;
+    }
+
+    /* Jersey number badge styling */
+    .jersey-num {
+      display: inline-block;
+      background-color: var(--red);
+      color: var(--white);
+      font-weight: 700;
+      font-size: 0.8rem;
+      width: 28px;
+      height: 28px;
+      line-height: 28px;   /* vertically center text in a fixed-height box */
+      text-align: center;
+      border-radius: 50%;  /* makes it a circle */
+    }
+
+    /* ===== LAST GAME SUMMARY =============================
+       A big score display and match details, not a table.
+    ====================================================== */
+    .game-meta {
+      font-size: 0.85rem;
+      color: #555;
+      margin-bottom: 16px;
+    }
+
+    .game-meta span {
+      margin-right: 16px;
+    }
+
+    .scoreboard {
+      display: flex;          /* flexbox lines things up in a row */
+      align-items: center;    /* vertically center all items */
+      justify-content: center;
+      gap: 16px;
+      background: var(--black);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 8px;
+    }
+
+    .score-team {
+      text-align: center;
+      color: var(--white);
+      flex: 1;  /* each team takes equal space */
+    }
+
+    .score-team-name {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.75;
+      margin-bottom: 4px;
+    }
+
+    .score-number {
+      font-size: 3rem;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    /* Highlight our team's score in red */
+    .score-number.ours {
+      color: var(--red);
+    }
+
+    .score-divider {
+      color: #888;
+      font-size: 1.5rem;
+      font-weight: 300;
+    }
+
+    .result-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 99px;   /* pill shape */
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .result-badge.win  { background: #d4edda; color: #1a5c2a; }
+    .result-badge.loss { background: #f8d7da; color: #7b1c24; }
+    .result-badge.tie  { background: #fff3cd; color: #856404; }
+
+    /* ===== STAT HIGHLIGHTS ==============================
+       Small inline badges showing goals (⚽) and assists (👟)
+    ====================================================== */
+    .stat-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--gray-light);
+      border-radius: 99px;
+      padding: 2px 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-right: 4px;
+    }
+
+    .stat-pill.goal   { background: #fde8ea; color: var(--red-dark); }
+    .stat-pill.assist { background: #e8f0fe; color: #1a4fad; }
+
+    /* ===== SEASON RECORD BAR ============================
+       A visual W-L-T record display in the header area of
+       the season section.
+    ====================================================== */
+    .record-bar {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+      font-size: 0.85rem;
+    }
+
+    .record-item {
+      text-align: center;
+      flex: 1;
+      background: var(--gray-light);
+      border-radius: var(--radius);
+      padding: 10px;
+    }
+
+    .record-item .record-num {
+      font-size: 1.8rem;
+      font-weight: 900;
+      line-height: 1;
+      display: block;
+    }
+
+    .record-item .record-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    .record-item.wins   .record-num { color: #1a5c2a; }
+    .record-item.losses .record-num { color: var(--red); }
+    .record-item.ties   .record-num { color: #856404; }
+
+    /* ===== FOOTER ======================================= */
+    footer {
+      text-align: center;
+      padding: 24px 16px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--red);
+    }
+
+    /* ===== RESPONSIVE: LARGER SCREENS ===================
+       On screens 480px and wider, we can afford slightly bigger
+       type and spacing. This is the "mobile-first" approach:
+       we write small-screen styles above, then add larger-screen
+       tweaks here with min-width media queries.
+    ====================================================== */
+    @media (min-width: 480px) {
+      .team-name      { font-size: 3.5rem; }
+      .score-number   { font-size: 3.5rem; }
+      table           { font-size: 1rem; }
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <!--
+    PAGE WRAPPER
+    All visible content sits inside this div.
+    It centers everything and adds side padding.
+  -->
+  <div class="page-wrapper">
+
+    <!-- ================================================
+      HEADER
+      The top banner with team name and season info.
+    ================================================== -->
+    <header>
+      <span class="header-emoji">⚽</span>
+      <h1 class="team-name">Ninjas</h1>
+      <p class="season-label">Spring 2026 Season</p>
+      <p class="district-label">Lindbergh School District · Girls 1st Grade</p>
+    </header>
+
+
+    <!-- ================================================
+      SECTION 1: ROSTER
+      A table listing every player's jersey number,
+      name, and position.
+    ================================================== -->
+    <section class="card" aria-labelledby="roster-heading">
+      <h2 class="section-title" id="roster-heading">Roster</h2>
+
+      <!--
+        Accessible table structure:
+        - <thead> holds the header row
+        - <tbody> holds the data rows
+        - scope="col" on <th> tells screen readers it's a column header
+      -->
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Name</th>
+            <th scope="col">Position</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Each <tr> is one player. Update names and numbers here! -->
+          <tr>
+            <td class="col-center"><span class="jersey-num">1</span></td>
+            <td>Lily Chen</td>
+            <td>Goalkeeper</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">2</span></td>
+            <td>Sofia Martinez</td>
+            <td>Defender</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">3</span></td>
+            <td>Emma Johnson</td>
+            <td>Defender</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">4</span></td>
+            <td>Ava Williams</td>
+            <td>Defender</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">5</span></td>
+            <td>Mia Thompson</td>
+            <td>Midfielder</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">6</span></td>
+            <td>Harper Davis</td>
+            <td>Midfielder</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">7</span></td>
+            <td>Chloe Garcia</td>
+            <td>Midfielder</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">8</span></td>
+            <td>Aria Wilson</td>
+            <td>Forward</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">9</span></td>
+            <td>Nora Anderson</td>
+            <td>Forward</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">10</span></td>
+            <td>Luna Taylor</td>
+            <td>Forward</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+
+    <!-- ================================================
+      SECTION 2: LAST GAME
+      A visual scoreboard and match details for the
+      most recent game.
+    ================================================== -->
+    <section class="card" aria-labelledby="last-game-heading">
+      <h2 class="section-title" id="last-game-heading">Last Game</h2>
+
+      <!-- Date and location info above the scoreboard -->
+      <p class="game-meta">
+        <span>📅 March 22, 2026</span>
+        <span>📍 Lindbergh Park — Field 2</span>
+      </p>
+
+      <!-- The big score display -->
+      <div class="scoreboard" role="img" aria-label="Ninjas 3, Eagles 1">
+        <div class="score-team">
+          <div class="score-team-name">Ninjas</div>
+          <!-- "ours" class turns our score red -->
+          <div class="score-number ours">3</div>
+        </div>
+
+        <div class="score-divider">–</div>
+
+        <div class="score-team">
+          <div class="score-team-name">Eagles</div>
+          <div class="score-number">1</div>
+        </div>
+      </div>
+
+      <!-- Win/loss/tie badge shown below the scoreboard -->
+      <p style="text-align:center; margin-top: 10px;">
+        <span class="result-badge win">Win</span>
+      </p>
+    </section>
+
+
+    <!-- ================================================
+      SECTION 3: LAST GAME PLAYER STATS
+      Goals and assists each player scored in the
+      most recent game.
+    ================================================== -->
+    <section class="card" aria-labelledby="game-stats-heading">
+      <h2 class="section-title" id="game-stats-heading">Game Stats — March 22</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Player</th>
+            <!--
+              aria-label gives screen readers a better description
+              than just the emoji symbol alone
+            -->
+            <th scope="col" class="col-center" aria-label="Goals">⚽ Goals</th>
+            <th scope="col" class="col-center" aria-label="Assists">🅰️ Assists</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!--
+            Only include players who appeared in the game.
+            Goals and assists default to 0 if the player didn't score.
+          -->
+          <tr>
+            <td class="col-center"><span class="jersey-num">8</span></td>
+            <td>Aria Wilson</td>
+            <td class="col-center">2</td>
+            <td class="col-center">0</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">10</span></td>
+            <td>Luna Taylor</td>
+            <td class="col-center">1</td>
+            <td class="col-center">1</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">6</span></td>
+            <td>Harper Davis</td>
+            <td class="col-center">0</td>
+            <td class="col-center">2</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">9</span></td>
+            <td>Nora Anderson</td>
+            <td class="col-center">0</td>
+            <td class="col-center">0</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">5</span></td>
+            <td>Mia Thompson</td>
+            <td class="col-center">0</td>
+            <td class="col-center">0</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">7</span></td>
+            <td>Chloe Garcia</td>
+            <td class="col-center">0</td>
+            <td class="col-center">1</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">2</span></td>
+            <td>Sofia Martinez</td>
+            <td class="col-center">0</td>
+            <td class="col-center">0</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">3</span></td>
+            <td>Emma Johnson</td>
+            <td class="col-center">0</td>
+            <td class="col-center">0</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">4</span></td>
+            <td>Ava Williams</td>
+            <td class="col-center">0</td>
+            <td class="col-center">0</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">1</span></td>
+            <td>Lily Chen</td>
+            <td class="col-center">0</td>
+            <td class="col-center">0</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+
+    <!-- ================================================
+      SECTION 4: SEASON TOTALS
+      Cumulative goals and assists across all games
+      played so far this season.
+    ================================================== -->
+    <section class="card" aria-labelledby="season-heading">
+      <h2 class="section-title" id="season-heading">Season Totals</h2>
+
+      <!-- W-L-T record summary at the top of this section -->
+      <div class="record-bar" role="group" aria-label="Season record">
+        <div class="record-item wins">
+          <span class="record-num">4</span>
+          <span class="record-label">Wins</span>
+        </div>
+        <div class="record-item losses">
+          <span class="record-num">1</span>
+          <span class="record-label">Losses</span>
+        </div>
+        <div class="record-item ties">
+          <span class="record-num">1</span>
+          <span class="record-label">Ties</span>
+        </div>
+      </div>
+
+      <!-- Season stats sorted by total goals (highest first) -->
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Player</th>
+            <th scope="col" class="col-center" aria-label="Goals">⚽ Goals</th>
+            <th scope="col" class="col-center" aria-label="Assists">🅰️ Assists</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-center"><span class="jersey-num">8</span></td>
+            <td>Aria Wilson</td>
+            <td class="col-center">7</td>
+            <td class="col-center">2</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">10</span></td>
+            <td>Luna Taylor</td>
+            <td class="col-center">5</td>
+            <td class="col-center">4</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">9</span></td>
+            <td>Nora Anderson</td>
+            <td class="col-center">3</td>
+            <td class="col-center">1</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">7</span></td>
+            <td>Chloe Garcia</td>
+            <td class="col-center">2</td>
+            <td class="col-center">3</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">6</span></td>
+            <td>Harper Davis</td>
+            <td class="col-center">1</td>
+            <td class="col-center">5</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">5</span></td>
+            <td>Mia Thompson</td>
+            <td class="col-center">1</td>
+            <td class="col-center">2</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">3</span></td>
+            <td>Emma Johnson</td>
+            <td class="col-center">0</td>
+            <td class="col-center">1</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">2</span></td>
+            <td>Sofia Martinez</td>
+            <td class="col-center">0</td>
+            <td class="col-center">1</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">4</span></td>
+            <td>Ava Williams</td>
+            <td class="col-center">0</td>
+            <td class="col-center">0</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">1</span></td>
+            <td>Lily Chen</td>
+            <td class="col-center">0</td>
+            <td class="col-center">0</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+
+    <!-- ================================================
+      FOOTER
+    ================================================== -->
+    <footer>
+      ⚽ Go Ninjas! ⚽
+    </footer>
+
+  </div><!-- end .page-wrapper -->
+
+</body>
+</html>
