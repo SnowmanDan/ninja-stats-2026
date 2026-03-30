@@ -24,12 +24,12 @@
 
     /* ===== CSS VARIABLES =================================
        Define our team colors and reusable values in one place.
-       Later in the file we use var(--red) instead of repeating
+       Later in the file we use var(--blue) instead of repeating
        the hex code everywhere. Makes it easy to tweak the theme.
     ====================================================== */
     :root {
-      --red:        #cc1122;   /* main team red */
-      --red-dark:   #991122;   /* darker red for hover states */
+      --blue:       #1155cc;   /* main team blue */
+      --blue-dark:  #003399;   /* darker blue for hover states */
       --black:      #111111;   /* near-black for text and backgrounds */
       --white:      #ffffff;
       --gray-light: #f4f4f4;   /* subtle background for alternating rows */
@@ -75,7 +75,7 @@
        of a flat color to give it a little energy.
     ====================================================== */
     header {
-      background: linear-gradient(135deg, var(--red) 0%, var(--red-dark) 100%);
+      background: linear-gradient(135deg, var(--blue) 0%, var(--blue-dark) 100%);
       color: var(--white);
       text-align: center;
       padding: 32px 16px 24px;
@@ -132,7 +132,7 @@
     }
 
     /* ===== SECTION HEADINGS ==============================
-       A red left border accent + bold uppercase label.
+       A blue left border accent + bold uppercase label.
        The border-left gives a sporty "stripe" feel.
     ====================================================== */
     .section-title {
@@ -140,8 +140,8 @@
       font-weight: 700;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: var(--red);
-      border-left: 4px solid var(--red);
+      color: var(--blue);
+      border-left: 4px solid var(--blue);
       padding-left: 10px;
       margin-bottom: 16px;
     }
