@@ -454,7 +454,71 @@
 
 
     <!-- ================================================
-      SECTION 2: LAST GAME
+      SECTION 2: SEASON TOTALS
+      Cumulative goals and assists across all games
+      played so far this season.
+    ================================================== -->
+    <section class="card" aria-labelledby="season-heading">
+      <h2 class="section-title" id="season-heading">Season Totals</h2>
+
+      <!-- W-L-T record summary at the top of this section -->
+      <div class="record-bar" role="group" aria-label="Season record">
+        <div class="record-item wins">
+          <span class="record-num">1</span>
+          <span class="record-label">Wins</span>
+        </div>
+        <div class="record-item losses">
+          <span class="record-num">0</span>
+          <span class="record-label">Losses</span>
+        </div>
+        <div class="record-item ties">
+          <span class="record-num">0</span>
+          <span class="record-label">Ties</span>
+        </div>
+      </div>
+
+      <!-- Season stats sorted by total goals (highest first) -->
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Player</th>
+            <th scope="col" class="col-center" aria-label="Goals">⚽ Goals</th>
+            <th scope="col" class="col-center" aria-label="Assists">🅰️ Assists</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-center"><span class="jersey-num">1</span></td>
+            <td>Eleonora</td>
+            <td class="col-center">2</td>
+            <td class="col-center">0</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">2</span></td>
+            <td>Carolina</td>
+            <td class="col-center">1</td>
+            <td class="col-center">0</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">3</span></td>
+            <td>Lucy</td>
+            <td class="col-center">1</td>
+            <td class="col-center">0</td>
+          </tr>
+          <tr>
+            <td class="col-center"><span class="jersey-num">4</span></td>
+            <td>Lucille</td>
+            <td class="col-center">1</td>
+            <td class="col-center">0</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+
+    <!-- ================================================
+      SECTION 3: LAST GAME
       A visual scoreboard and match details for the
       most recent game.
     ================================================== -->
@@ -490,7 +554,7 @@
 
 
     <!-- ================================================
-      SECTION 3: LAST GAME PLAYER STATS
+      SECTION 4: LAST GAME PLAYER STATS
       Goals and assists each player scored in the
       most recent game.
     ================================================== -->
@@ -515,70 +579,6 @@
             Only include players who appeared in the game.
             Goals and assists default to 0 if the player didn't score.
           -->
-          <tr>
-            <td class="col-center"><span class="jersey-num">1</span></td>
-            <td>Eleonora</td>
-            <td class="col-center">2</td>
-            <td class="col-center">0</td>
-          </tr>
-          <tr>
-            <td class="col-center"><span class="jersey-num">2</span></td>
-            <td>Carolina</td>
-            <td class="col-center">1</td>
-            <td class="col-center">0</td>
-          </tr>
-          <tr>
-            <td class="col-center"><span class="jersey-num">3</span></td>
-            <td>Lucy</td>
-            <td class="col-center">1</td>
-            <td class="col-center">0</td>
-          </tr>
-          <tr>
-            <td class="col-center"><span class="jersey-num">4</span></td>
-            <td>Lucille</td>
-            <td class="col-center">1</td>
-            <td class="col-center">0</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-
-
-    <!-- ================================================
-      SECTION 4: SEASON TOTALS
-      Cumulative goals and assists across all games
-      played so far this season.
-    ================================================== -->
-    <section class="card" aria-labelledby="season-heading">
-      <h2 class="section-title" id="season-heading">Season Totals</h2>
-
-      <!-- W-L-T record summary at the top of this section -->
-      <div class="record-bar" role="group" aria-label="Season record">
-        <div class="record-item wins">
-          <span class="record-num">1</span>
-          <span class="record-label">Wins</span>
-        </div>
-        <div class="record-item losses">
-          <span class="record-num">0</span>
-          <span class="record-label">Losses</span>
-        </div>
-        <div class="record-item ties">
-          <span class="record-num">0</span>
-          <span class="record-label">Ties</span>
-        </div>
-      </div>
-
-      <!-- Season stats sorted by total goals (highest first) -->
-      <table>
-        <thead>
-          <tr>
-            <th scope="col">#</th>
-            <th scope="col">Player</th>
-            <th scope="col" class="col-center" aria-label="Goals">⚽ Goals</th>
-            <th scope="col" class="col-center" aria-label="Assists">🅰️ Assists</th>
-          </tr>
-        </thead>
-        <tbody>
           <tr>
             <td class="col-center"><span class="jersey-num">1</span></td>
             <td>Eleonora</td>
