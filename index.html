@@ -24,17 +24,24 @@
 
     /* ===== CSS VARIABLES =================================
        Define our team colors and reusable values in one place.
-       Later in the file we use var(--blue) instead of repeating
+       Later in the file we use var(--red) instead of repeating
        the hex code everywhere. Makes it easy to tweak the theme.
+       This is a dark ESPN-style scoreboard theme:
+       deep blacks + bold red accents.
     ====================================================== */
     :root {
-      --blue:       #1155cc;   /* main team blue */
-      --blue-dark:  #003399;   /* darker blue for hover states */
-      --black:      #111111;   /* near-black for text and backgrounds */
-      --white:      #ffffff;
-      --gray-light: #f4f4f4;   /* subtle background for alternating rows */
-      --gray-mid:   #dddddd;   /* borders */
-      --radius:     8px;       /* consistent rounded corners */
+      --red:          #cc0000;   /* ESPN-style red accent */
+      --red-dark:     #990000;   /* darker red for hover states */
+      --bg-page:      #0d0d0d;   /* very dark page background */
+      --bg-card:      #1a1a1a;   /* slightly lighter card surface */
+      --bg-card-alt:  #222222;   /* alternating table row background */
+      --bg-header:    #111111;   /* dark header bar */
+      --black:        #111111;   /* near-black (kept for table heads) */
+      --white:        #ffffff;
+      --text-primary: #eeeeee;   /* main body text on dark bg */
+      --text-muted:   #888888;   /* secondary / subdued text */
+      --border:       #2e2e2e;   /* subtle divider lines */
+      --radius:       8px;       /* consistent rounded corners */
     }
 
     /* ===== RESET & BASE STYLES ==========================
@@ -55,8 +62,8 @@
       /* system-ui uses whatever the OS's default UI font is:
          San Francisco on Mac/iPhone, Roboto on Android, Segoe UI
          on Windows. Looks native and loads instantly. */
-      background-color: #e8e8e8;
-      color: var(--black);
+      background-color: var(--bg-page);
+      color: var(--text-primary);
       line-height: 1.5; /* slightly loose line spacing for readability */
     }
 
@@ -71,15 +78,18 @@
     }
 
     /* ===== HEADER ========================================
-       The top banner. We use a gradient (two reds) instead
-       of a flat color to give it a little energy.
+       ESPN-style dark header: nearly black background with a
+       bold red bottom border acting as a "ticker stripe."
     ====================================================== */
     header {
-      background: linear-gradient(135deg, var(--blue) 0%, var(--blue-dark) 100%);
+      background: var(--bg-header);
       color: var(--white);
       text-align: center;
       padding: 32px 16px 24px;
       margin-bottom: 24px;
+
+      /* A thick red bottom border mimics the ESPN ticker stripe */
+      border-bottom: 4px solid var(--red);
 
       /* Extend the header edge-to-edge by canceling the wrapper's
          16px side padding with a negative margin trick */
@@ -116,32 +126,35 @@
     }
 
     /* ===== SECTION CARDS =================================
-       Each content section (roster, last game, stats) is wrapped
-       in a "card" — a white box with a shadow to lift it off
-       the gray background.
+       Each content section is wrapped in a "card" — a dark
+       surface that sits slightly above the page background.
+       A thin red top border gives each card a sporty accent.
     ====================================================== */
     .card {
-      background: var(--white);
+      background: var(--bg-card);
       border-radius: var(--radius);
       padding: 20px;
       margin-bottom: 20px;
 
+      /* Red top border acts as a section accent stripe */
+      border-top: 3px solid var(--red);
+
       /* box-shadow: [x-offset] [y-offset] [blur] [spread] [color]
-         This creates a subtle drop shadow beneath each card. */
-      box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+         On a dark page, shadow helps cards feel layered. */
+      box-shadow: 0 4px 12px rgba(0,0,0,0.50);
     }
 
     /* ===== SECTION HEADINGS ==============================
-       A blue left border accent + bold uppercase label.
-       The border-left gives a sporty "stripe" feel.
+       A red left border accent + bold uppercase label —
+       the same style you see on ESPN segment headers.
     ====================================================== */
     .section-title {
       font-size: 0.75rem;
       font-weight: 700;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: var(--blue);
-      border-left: 4px solid var(--blue);
+      color: var(--red);
+      border-left: 4px solid var(--red);
       padding-left: 10px;
       margin-bottom: 16px;
     }
@@ -158,10 +171,10 @@
       font-size: 0.9rem;
     }
 
-    /* Table header cells */
+    /* Table header cells — deep charcoal like ESPN stat tables */
     thead th {
-      background-color: var(--black);
-      color: var(--white);
+      background-color: #0a0a0a;
+      color: var(--text-muted);
       text-align: left;
       padding: 10px 12px;
       font-size: 0.75rem;
@@ -176,7 +189,7 @@
     /* Table body cells */
     tbody td {
       padding: 10px 12px;
-      border-bottom: 1px solid var(--gray-mid);
+      border-bottom: 1px solid var(--border);
       vertical-align: middle;
     }
 
@@ -189,12 +202,12 @@
     /* Alternating row backgrounds (zebra striping) make long
        tables easier to read across a row */
     tbody tr:nth-child(even) {
-      background-color: var(--gray-light);
+      background-color: var(--bg-card-alt);
     }
 
-    /* Subtle highlight when hovering over a row */
+    /* Subtle red-tinted highlight when hovering over a row */
     tbody tr:hover {
-      background-color: #fde8ea;  /* very light red tint */
+      background-color: #2a0a0a;  /* very dark red tint */
     }
 
     /* Center-align number columns (jersey #, goals, assists) */
@@ -202,7 +215,7 @@
       text-align: center;
     }
 
-    /* Jersey number badge styling */
+    /* Jersey number badge styling — red circle badge */
     .jersey-num {
       display: inline-block;
       background-color: var(--red);
@@ -221,7 +234,7 @@
     ====================================================== */
     .game-meta {
       font-size: 0.85rem;
-      color: #555;
+      color: var(--text-muted);
       margin-bottom: 16px;
     }
 
@@ -234,7 +247,9 @@
       align-items: center;    /* vertically center all items */
       justify-content: center;
       gap: 16px;
-      background: var(--black);
+      /* Darker than the card itself, like a TV broadcast scorebug */
+      background: #0a0a0a;
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 20px;
       margin-bottom: 8px;
@@ -266,7 +281,7 @@
     }
 
     .score-divider {
-      color: #888;
+      color: var(--text-muted);
       font-size: 1.5rem;
       font-weight: 300;
     }
@@ -280,9 +295,10 @@
       letter-spacing: 1px;
       text-transform: uppercase;
     }
-    .result-badge.win  { background: #d4edda; color: #1a5c2a; }
-    .result-badge.loss { background: #f8d7da; color: #7b1c24; }
-    .result-badge.tie  { background: #fff3cd; color: #856404; }
+    /* Dark theme badge variants — muted tones that still read clearly */
+    .result-badge.win  { background: #0f2e18; color: #4caf6e; border: 1px solid #1a5c2a; }
+    .result-badge.loss { background: #2e0f0f; color: #e57373; border: 1px solid var(--red-dark); }
+    .result-badge.tie  { background: #2a2000; color: #f0c040; border: 1px solid #856404; }
 
     /* ===== STAT HIGHLIGHTS ==============================
        Small inline badges showing goals (⚽) and assists (👟)
@@ -291,7 +307,7 @@
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      background: var(--gray-light);
+      background: var(--bg-card-alt);
       border-radius: 99px;
       padding: 2px 8px;
       font-size: 0.8rem;
@@ -299,8 +315,8 @@
       margin-right: 4px;
     }
 
-    .stat-pill.goal   { background: #fde8ea; color: var(--red-dark); }
-    .stat-pill.assist { background: #e8f0fe; color: #1a4fad; }
+    .stat-pill.goal   { background: #2e0f0f; color: #e57373; }
+    .stat-pill.assist { background: #0f1a2e; color: #6fa3e0; }
 
     /* ===== SEASON RECORD BAR ============================
        A visual W-L-T record display in the header area of
@@ -316,7 +332,8 @@
     .record-item {
       text-align: center;
       flex: 1;
-      background: var(--gray-light);
+      background: #0a0a0a;
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 10px;
     }
@@ -332,13 +349,13 @@
       font-size: 0.7rem;
       text-transform: uppercase;
       letter-spacing: 1px;
-      color: #666;
+      color: var(--text-muted);
       margin-top: 2px;
     }
 
-    .record-item.wins   .record-num { color: #1a5c2a; }
+    .record-item.wins   .record-num { color: #4caf6e; }
     .record-item.losses .record-num { color: var(--red); }
-    .record-item.ties   .record-num { color: #856404; }
+    .record-item.ties   .record-num { color: #f0c040; }
 
     /* ===== FOOTER ======================================= */
     footer {
@@ -348,7 +365,7 @@
       font-weight: 700;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: var(--red);
+      color: var(--text-muted);
     }
 
     /* ===== RESPONSIVE: LARGER SCREENS ===================
