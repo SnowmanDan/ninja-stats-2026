@@ -443,7 +443,7 @@
 
         <!-- Left pixel player — faces right (toward the title) -->
         <canvas id="player-left" class="player-canvas"
-                width="48" height="64" aria-hidden="true"></canvas>
+                width="64" height="80" aria-hidden="true"></canvas>
 
         <div class="header-center">
           <span class="header-emoji">⚽</span>
@@ -454,7 +454,7 @@
 
         <!-- Right pixel player — mirrored to face left (toward the title) -->
         <canvas id="player-right" class="player-canvas"
-                width="48" height="64" aria-hidden="true"></canvas>
+                width="64" height="80" aria-hidden="true"></canvas>
 
       </div>
     </header>
@@ -766,11 +766,15 @@
          Keeping the palette small and named makes it easy to
          tweak or re-theme the characters later.              */
       const SK = '#f5c897'; /* skin tone                      */
-      const HR = '#1a0a00'; /* dark hair                      */
+      const HR = '#3d1c00'; /* dark brown hair                */
+      const EY = '#111111'; /* eyes                           */
       const JR = '#1a55ee'; /* blue jersey                    */
+      const JS = '#5588ff'; /* lighter blue jersey stripe     */
       const PT = '#111111'; /* black shorts                   */
-      const WS = '#e0e0e0'; /* white socks                    */
-      const BT = '#3a2000'; /* dark brown boot                */
+      const WS = '#e8e8e8'; /* white socks                    */
+      const WB = '#cc0000'; /* red stripe on socks            */
+      const BT = '#4a2800'; /* dark brown boot upper          */
+      const BS = '#111111'; /* boot sole (slightly darker)    */
       const BW = '#ffffff'; /* soccer ball — white panels     */
       const BD = '#222222'; /* soccer ball — dark patches     */
       const N  = null;      /* transparent — skip this cell   */
@@ -778,50 +782,58 @@
       /* ---------------------------------------------------------
          SPRITE FRAMES
          Each frame is a 2-D array: frame[row][col] = color | null
-         The grid is 12 columns × 16 rows, drawn at SCALE px each
-         → 48 × 64 px canvas.  Character faces RIGHT by default.
+         The grid is 16 columns × 20 rows, drawn at SCALE px each
+         → 64 × 80 px canvas.  Character faces RIGHT by default.
          --------------------------------------------------------- */
 
-      /* Frame 1 — idle: player standing, ball resting at right foot */
+      /* Frame 1 — idle: player standing, ball resting at feet */
       const FRAME_IDLE = [
-        /* col:  0    1    2    3    4    5    6    7    8    9   10   11  */
-        [  N,   N,   N,  SK,  SK,  SK,  SK,   N,   N,   N,   N,   N  ], /*  0 head     */
-        [  N,   N,   N,  SK,  SK,  SK,  SK,   N,   N,   N,   N,   N  ], /*  1 head     */
-        [  N,   N,   N,  HR,  HR,  HR,  HR,   N,   N,   N,   N,   N  ], /*  2 hair     */
-        [  N,  JR,  JR,  JR,  JR,  JR,  JR,  JR,   N,   N,   N,   N  ], /*  3 jersey   */
-        [  N,  JR,  JR,  JR,  JR,  JR,  JR,  JR,   N,   N,   N,   N  ], /*  4 jersey   */
-        [  N,  JR,  JR,  JR,  JR,  JR,  JR,  JR,   N,   N,   N,   N  ], /*  5 jersey   */
-        [  N,  PT,  PT,  PT,  PT,  PT,  PT,  PT,   N,   N,   N,   N  ], /*  6 shorts   */
-        [  N,  PT,  PT,  PT,  PT,  PT,  PT,  PT,   N,   N,   N,   N  ], /*  7 shorts   */
-        [  N,   N,  WS,  WS,   N,  WS,  WS,   N,   N,   N,   N,   N  ], /*  8 socks    */
-        [  N,   N,  WS,  WS,   N,  WS,  WS,   N,   N,   N,   N,   N  ], /*  9 socks    */
-        [  N,   N,  BT,  BT,   N,  BT,  BT,   N,   N,   N,   N,   N  ], /* 10 boots    */
-        [  N,   N,   N,   N,   N,   N,   N,   N,   N,   N,   N,   N  ], /* 11 gap      */
-        [  N,   N,   N,   N,   N,   N,  BW,  BD,  BW,   N,   N,   N  ], /* 12 ball ●   */
-        [  N,   N,   N,   N,   N,   N,  BD,  BW,  BD,   N,   N,   N  ], /* 13 ball     */
-        [  N,   N,   N,   N,   N,   N,  BW,  BD,  BW,   N,   N,   N  ], /* 14 ball     */
-        [  N,   N,   N,   N,   N,   N,   N,   N,   N,   N,   N,   N  ], /* 15 ground   */
+        /* col:  0    1    2    3    4    5    6    7    8    9   10   11   12   13   14   15  */
+        [  N,   N,   N,   N,   N,  HR,  HR,  HR,  HR,  HR,   N,   N,   N,   N,   N,   N  ], /*  0 hair     */
+        [  N,   N,   N,   N,  HR,  SK,  SK,  SK,  SK,  SK,  HR,   N,   N,   N,   N,   N  ], /*  1 head     */
+        [  N,   N,   N,   N,  SK,  EY,  SK,  SK,  SK,  EY,  SK,   N,   N,   N,   N,   N  ], /*  2 eyes     */
+        [  N,   N,   N,   N,  SK,  SK,  SK,  SK,  SK,  SK,  SK,   N,   N,   N,   N,   N  ], /*  3 face     */
+        [  N,   N,   N,   N,  JR,  JR,  SK,  SK,  JR,  JR,  JR,   N,   N,   N,   N,   N  ], /*  4 collar   */
+        [  N,   N,   N,  JR,  JR,  JR,  JR,  JR,  JR,  JR,  JR,  JR,   N,   N,   N,   N  ], /*  5 shoulders*/
+        [  N,   N,  JR,  JR,  JR,  JR,  JS,  JS,  JR,  JR,  JR,  JR,  JR,   N,   N,   N  ], /*  6 jersey   */
+        [  N,  JR,  JR,  JR,  JR,  JR,  JS,  JS,  JR,  JR,  JR,  JR,  JR,  JR,   N,   N  ], /*  7 arms out */
+        [  N,  SK,  SK,  JR,  JR,  JR,  JS,  JS,  JR,  JR,  JR,  JR,  SK,  SK,   N,   N  ], /*  8 forearms */
+        [  N,   N,   N,  PT,  PT,  PT,  PT,  PT,  PT,  PT,  PT,   N,   N,   N,   N,   N  ], /*  9 shorts   */
+        [  N,   N,   N,  PT,  PT,  PT,  PT,  PT,  PT,  PT,  PT,   N,   N,   N,   N,   N  ], /* 10 shorts   */
+        [  N,   N,   N,  WS,  WS,  WS,   N,   N,  WS,  WS,  WS,   N,   N,   N,   N,   N  ], /* 11 thighs   */
+        [  N,   N,   N,  WS,  WS,   N,   N,   N,   N,  WS,  WS,   N,   N,   N,   N,   N  ], /* 12 socks    */
+        [  N,   N,   N,  WS,  WS,   N,   N,   N,   N,  WS,  WS,   N,   N,   N,   N,   N  ], /* 13 socks    */
+        [  N,   N,   N,  WB,  WB,   N,   N,   N,   N,  WB,  WB,   N,   N,   N,   N,   N  ], /* 14 red stripe*/
+        [  N,   N,   N,  WS,  WS,   N,   N,   N,   N,  WS,  WS,   N,   N,   N,   N,   N  ], /* 15 socks    */
+        [  N,   N,  BT,  BT,  BT,  BT,   N,  BT,  BT,  BT,  BT,   N,   N,   N,   N,   N  ], /* 16 boots    */
+        [  N,  BS,  BS,  BT,  BT,  BT,  BS,  BS,  BT,  BT,  BT,  BS,   N,   N,   N,   N  ], /* 17 soles    */
+        [  N,   N,   N,   N,   N,  BW,  BD,  BW,  BD,   N,   N,   N,   N,   N,   N,   N  ], /* 18 ball ●   */
+        [  N,   N,   N,   N,   N,  BD,  BW,  BD,  BW,   N,   N,   N,   N,   N,   N,   N  ], /* 19 ball     */
       ];
 
       /* Frame 2 — kick: right leg swings forward, ball flies right  */
       const FRAME_KICK = [
-        /* col:  0    1    2    3    4    5    6    7    8    9   10   11  */
-        [  N,   N,   N,  SK,  SK,  SK,  SK,   N,   N,   N,   N,   N  ], /*  0 head     */
-        [  N,   N,   N,  SK,  SK,  SK,  SK,   N,   N,   N,   N,   N  ], /*  1 head     */
-        [  N,   N,   N,  HR,  HR,  HR,  HR,   N,   N,   N,   N,   N  ], /*  2 hair     */
-        [  N,  JR,  JR,  JR,  JR,  JR,  JR,  JR,   N,   N,   N,   N  ], /*  3 jersey   */
-        [  N,  JR,  JR,  JR,  JR,  JR,  JR,  JR,   N,   N,   N,   N  ], /*  4 jersey   */
-        [  N,  JR,  JR,  JR,  JR,  JR,  JR,  JR,   N,   N,   N,   N  ], /*  5 jersey   */
-        [  N,  PT,  PT,  PT,  PT,  PT,  PT,  PT,   N,   N,   N,   N  ], /*  6 shorts   */
-        [  N,  PT,  PT,  PT,  PT,  PT,  PT,  PT,   N,   N,   N,   N  ], /*  7 shorts   */
-        [  N,   N,  WS,  WS,   N,   N,   N,   N,   N,   N,   N,   N  ], /*  8 plant leg only (right leg swings through) */
-        [  N,   N,  WS,  WS,   N,   N,   N,   N,   N,   N,   N,   N  ], /*  9 plant leg only */
-        [  N,   N,  BT,  BT,   N,   N,   N,  WS,  WS,   N,   N,   N  ], /* 10 left boot + right sock raised right */
-        [  N,   N,   N,   N,   N,   N,   N,   N,  BT,  BT,   N,   N  ], /* 11 right boot fully extended right     */
-        [  N,   N,   N,   N,   N,   N,   N,   N,   N,  BW,  BD,  BW  ], /* 12 ball kicked! flying right →          */
-        [  N,   N,   N,   N,   N,   N,   N,   N,   N,  BD,  BW,  BD  ], /* 13 ball                                 */
-        [  N,   N,   N,   N,   N,   N,   N,   N,   N,  BW,  BD,  BW  ], /* 14 ball                                 */
-        [  N,   N,   N,   N,   N,   N,   N,   N,   N,   N,   N,   N  ], /* 15 ground   */
+        /* col:  0    1    2    3    4    5    6    7    8    9   10   11   12   13   14   15  */
+        [  N,   N,   N,   N,   N,  HR,  HR,  HR,  HR,  HR,   N,   N,   N,   N,   N,   N  ], /*  0 hair     */
+        [  N,   N,   N,   N,  HR,  SK,  SK,  SK,  SK,  SK,  HR,   N,   N,   N,   N,   N  ], /*  1 head     */
+        [  N,   N,   N,   N,  SK,  EY,  SK,  SK,  SK,  EY,  SK,   N,   N,   N,   N,   N  ], /*  2 eyes     */
+        [  N,   N,   N,   N,  SK,  SK,  SK,  SK,  SK,  SK,  SK,   N,   N,   N,   N,   N  ], /*  3 face     */
+        [  N,   N,   N,   N,  JR,  JR,  SK,  SK,  JR,  JR,  JR,   N,   N,   N,   N,   N  ], /*  4 collar   */
+        [  N,   N,   N,  JR,  JR,  JR,  JR,  JR,  JR,  JR,  JR,  JR,   N,   N,   N,   N  ], /*  5 shoulders*/
+        [  N,   N,  JR,  JR,  JR,  JR,  JS,  JS,  JR,  JR,  JR,  JR,  JR,   N,   N,   N  ], /*  6 jersey   */
+        [  N,  JR,  JR,  JR,  JR,  JR,  JS,  JS,  JR,  JR,  JR,  JR,  JR,  JR,   N,   N  ], /*  7 arms out */
+        [  N,  SK,  SK,  JR,  JR,  JR,  JS,  JS,  JR,  JR,  JR,  JR,  SK,  SK,   N,   N  ], /*  8 forearms */
+        [  N,   N,   N,  PT,  PT,  PT,  PT,  PT,  PT,  PT,  PT,   N,   N,   N,   N,   N  ], /*  9 shorts   */
+        [  N,   N,   N,  PT,  PT,  PT,  PT,  PT,  PT,  PT,  PT,   N,   N,   N,   N,   N  ], /* 10 shorts   */
+        [  N,   N,   N,  WS,  WS,   N,   N,   N,  WS,  WS,   N,   N,   N,   N,   N,   N  ], /* 11 both legs */
+        [  N,   N,   N,  WS,  WS,   N,   N,   N,   N,   N,  WS,  WS,   N,   N,   N,   N  ], /* 12 kick leg angles right */
+        [  N,   N,   N,  WS,  WS,   N,   N,   N,   N,   N,   N,  WS,  WS,   N,   N,   N  ], /* 13 kick leg extends further */
+        [  N,   N,   N,  WB,  WB,   N,   N,   N,   N,   N,   N,   N,  WB,  WB,   N,   N  ], /* 14 red stripes */
+        [  N,   N,   N,  WS,  WS,   N,   N,   N,   N,   N,   N,   N,  WS,  WS,   N,   N  ], /* 15 lower socks */
+        [  N,   N,  BT,  BT,  BT,  BT,   N,   N,   N,   N,   N,   N,  BT,  BT,  BT,   N  ], /* 16 boots    */
+        [  N,  BS,  BS,  BT,  BT,  BT,  BS,   N,   N,   N,   N,  BS,  BT,  BT,  BT,  BS  ], /* 17 soles    */
+        [  N,   N,   N,   N,   N,   N,   N,   N,   N,  BW,  BD,  BW,   N,   N,   N,   N  ], /* 18 ball kicked → right */
+        [  N,   N,   N,   N,   N,   N,   N,   N,   N,  BD,  BW,  BD,   N,   N,   N,   N  ], /* 19 ball     */
       ];
 
       const FRAMES   = [FRAME_IDLE, FRAME_KICK];
