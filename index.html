@@ -97,6 +97,31 @@
       margin-right: -16px;
     }
 
+    /* ===== PIXEL CHARACTER LAYOUT =======================
+       Flex row so the two pixel players flank the title.
+       .header-center keeps all the text centered within
+       its flex column.
+    ====================================================== */
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .header-center {
+      text-align: center;
+      flex: 1;
+    }
+
+    /* image-rendering: pixelated keeps the canvas art crisp
+       (no blur) when the browser composites it onto the page */
+    .player-canvas {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges; /* Firefox / Safari */
+      flex-shrink: 0;
+    }
+
     .header-emoji {
       font-size: 3rem;    /* rem = relative to root font size; 3rem ≈ 48px */
       display: block;
@@ -414,10 +439,24 @@
       The top banner with team name and season info.
     ================================================== -->
     <header>
-      <span class="header-emoji">⚽</span>
-      <h1 class="team-name">Ninjas</h1>
-      <p class="season-label">Spring 2026 Season</p>
-      <p class="district-label">Lindbergh School District · Girls 1st Grade</p>
+      <div class="header-inner">
+
+        <!-- Left pixel player — faces right (toward the title) -->
+        <canvas id="player-left" class="player-canvas"
+                width="48" height="64" aria-hidden="true"></canvas>
+
+        <div class="header-center">
+          <span class="header-emoji">⚽</span>
+          <h1 class="team-name">Ninjas</h1>
+          <p class="season-label">Spring 2026 Season</p>
+          <p class="district-label">Lindbergh School District · Girls 1st Grade</p>
+        </div>
+
+        <!-- Right pixel player — mirrored to face left (toward the title) -->
+        <canvas id="player-right" class="player-canvas"
+                width="48" height="64" aria-hidden="true"></canvas>
+
+      </div>
     </header>
 
 
@@ -694,6 +733,155 @@
 
       /* kick off the animation */
       rafId = requestAnimationFrame(draw);
+    })();
+  </script>
+
+  <script>
+    /*
+      ============================================================
+      PIXEL CHARACTER ANIMATION
+      Two tiny Game Boy–style soccer players flank the "Ninjas"
+      title, cycling between an idle stance and a kicking pose.
+
+      How it works:
+        1. Each character lives on a small <canvas> element.
+        2. We define two sprite frames as 2-D arrays of color
+           codes (null = transparent, skip that cell).
+        3. Each "pixel" in the grid is drawn as SCALE×SCALE real
+           pixels using ctx.fillRect, giving it that chunky
+           retro Game Boy look.
+        4. The left canvas draws frames normally (→ facing right).
+           The right canvas flips the context horizontally before
+           drawing, so it faces left (← toward the center).
+        5. requestAnimationFrame drives the loop; we only redraw
+           when the active frame index changes.
+      ============================================================
+    */
+    (function () {
+
+      /* --- each "pixel block" is 4×4 real pixels --- */
+      const SCALE = 4;
+
+      /* --- color palette ---
+         Keeping the palette small and named makes it easy to
+         tweak or re-theme the characters later.              */
+      const SK = '#f5c897'; /* skin tone                      */
+      const HR = '#1a0a00'; /* dark hair                      */
+      const JR = '#1a55ee'; /* blue jersey                    */
+      const PT = '#111111'; /* black shorts                   */
+      const WS = '#e0e0e0'; /* white socks                    */
+      const BT = '#3a2000'; /* dark brown boot                */
+      const BW = '#ffffff'; /* soccer ball — white panels     */
+      const BD = '#222222'; /* soccer ball — dark patches     */
+      const N  = null;      /* transparent — skip this cell   */
+
+      /* ---------------------------------------------------------
+         SPRITE FRAMES
+         Each frame is a 2-D array: frame[row][col] = color | null
+         The grid is 12 columns × 16 rows, drawn at SCALE px each
+         → 48 × 64 px canvas.  Character faces RIGHT by default.
+         --------------------------------------------------------- */
+
+      /* Frame 1 — idle: player standing, ball resting at right foot */
+      const FRAME_IDLE = [
+        /* col:  0    1    2    3    4    5    6    7    8    9   10   11  */
+        [  N,   N,   N,  SK,  SK,  SK,  SK,   N,   N,   N,   N,   N  ], /*  0 head     */
+        [  N,   N,   N,  SK,  SK,  SK,  SK,   N,   N,   N,   N,   N  ], /*  1 head     */
+        [  N,   N,   N,  HR,  HR,  HR,  HR,   N,   N,   N,   N,   N  ], /*  2 hair     */
+        [  N,  JR,  JR,  JR,  JR,  JR,  JR,  JR,   N,   N,   N,   N  ], /*  3 jersey   */
+        [  N,  JR,  JR,  JR,  JR,  JR,  JR,  JR,   N,   N,   N,   N  ], /*  4 jersey   */
+        [  N,  JR,  JR,  JR,  JR,  JR,  JR,  JR,   N,   N,   N,   N  ], /*  5 jersey   */
+        [  N,  PT,  PT,  PT,  PT,  PT,  PT,  PT,   N,   N,   N,   N  ], /*  6 shorts   */
+        [  N,  PT,  PT,  PT,  PT,  PT,  PT,  PT,   N,   N,   N,   N  ], /*  7 shorts   */
+        [  N,   N,  WS,  WS,   N,  WS,  WS,   N,   N,   N,   N,   N  ], /*  8 socks    */
+        [  N,   N,  WS,  WS,   N,  WS,  WS,   N,   N,   N,   N,   N  ], /*  9 socks    */
+        [  N,   N,  BT,  BT,   N,  BT,  BT,   N,   N,   N,   N,   N  ], /* 10 boots    */
+        [  N,   N,   N,   N,   N,   N,   N,   N,   N,   N,   N,   N  ], /* 11 gap      */
+        [  N,   N,   N,   N,   N,   N,  BW,  BD,  BW,   N,   N,   N  ], /* 12 ball ●   */
+        [  N,   N,   N,   N,   N,   N,  BD,  BW,  BD,   N,   N,   N  ], /* 13 ball     */
+        [  N,   N,   N,   N,   N,   N,  BW,  BD,  BW,   N,   N,   N  ], /* 14 ball     */
+        [  N,   N,   N,   N,   N,   N,   N,   N,   N,   N,   N,   N  ], /* 15 ground   */
+      ];
+
+      /* Frame 2 — kick: right leg swings forward, ball flies right  */
+      const FRAME_KICK = [
+        /* col:  0    1    2    3    4    5    6    7    8    9   10   11  */
+        [  N,   N,   N,  SK,  SK,  SK,  SK,   N,   N,   N,   N,   N  ], /*  0 head     */
+        [  N,   N,   N,  SK,  SK,  SK,  SK,   N,   N,   N,   N,   N  ], /*  1 head     */
+        [  N,   N,   N,  HR,  HR,  HR,  HR,   N,   N,   N,   N,   N  ], /*  2 hair     */
+        [  N,  JR,  JR,  JR,  JR,  JR,  JR,  JR,   N,   N,   N,   N  ], /*  3 jersey   */
+        [  N,  JR,  JR,  JR,  JR,  JR,  JR,  JR,   N,   N,   N,   N  ], /*  4 jersey   */
+        [  N,  JR,  JR,  JR,  JR,  JR,  JR,  JR,   N,   N,   N,   N  ], /*  5 jersey   */
+        [  N,  PT,  PT,  PT,  PT,  PT,  PT,  PT,   N,   N,   N,   N  ], /*  6 shorts   */
+        [  N,  PT,  PT,  PT,  PT,  PT,  PT,  PT,   N,   N,   N,   N  ], /*  7 shorts   */
+        [  N,   N,  WS,  WS,   N,   N,   N,   N,   N,   N,   N,   N  ], /*  8 plant leg only (right leg swings through) */
+        [  N,   N,  WS,  WS,   N,   N,   N,   N,   N,   N,   N,   N  ], /*  9 plant leg only */
+        [  N,   N,  BT,  BT,   N,   N,   N,  WS,  WS,   N,   N,   N  ], /* 10 left boot + right sock raised right */
+        [  N,   N,   N,   N,   N,   N,   N,   N,  BT,  BT,   N,   N  ], /* 11 right boot fully extended right     */
+        [  N,   N,   N,   N,   N,   N,   N,   N,   N,  BW,  BD,  BW  ], /* 12 ball kicked! flying right →          */
+        [  N,   N,   N,   N,   N,   N,   N,   N,   N,  BD,  BW,  BD  ], /* 13 ball                                 */
+        [  N,   N,   N,   N,   N,   N,   N,   N,   N,  BW,  BD,  BW  ], /* 14 ball                                 */
+        [  N,   N,   N,   N,   N,   N,   N,   N,   N,   N,   N,   N  ], /* 15 ground   */
+      ];
+
+      const FRAMES   = [FRAME_IDLE, FRAME_KICK];
+      const FRAME_MS = 500; /* milliseconds to show each frame before switching */
+
+      /* ---------------------------------------------------------
+         drawFrame
+         Paints one sprite frame onto the given canvas context.
+         When mirrored=true the context is flipped on the X axis
+         before drawing — this makes the right-side character face
+         left without needing a separate set of pixel arrays.
+         --------------------------------------------------------- */
+      function drawFrame(ctx, frame, mirrored) {
+        const w = ctx.canvas.width;
+        const h = ctx.canvas.height;
+        ctx.clearRect(0, 0, w, h);
+
+        if (mirrored) {
+          ctx.save();
+          ctx.scale(-1, 1);    /* flip: positive x now goes left  */
+          ctx.translate(-w, 0); /* shift back so origin is top-left */
+        }
+
+        for (let row = 0; row < frame.length; row++) {
+          for (let col = 0; col < frame[row].length; col++) {
+            const color = frame[row][col];
+            if (color === null) continue; /* transparent — skip */
+            ctx.fillStyle = color;
+            /* each grid cell is SCALE×SCALE real pixels */
+            ctx.fillRect(col * SCALE, row * SCALE, SCALE, SCALE);
+          }
+        }
+
+        if (mirrored) ctx.restore();
+      }
+
+      /* grab both canvas contexts */
+      const ctxLeft  = document.getElementById('player-left').getContext('2d');
+      const ctxRight = document.getElementById('player-right').getContext('2d');
+
+      let lastFrameIdx = -1; /* track the previous frame to avoid redundant redraws */
+
+      function animate() {
+        /* divide time into FRAME_MS-sized buckets; mod 2 → 0 or 1 */
+        const idx = Math.floor(Date.now() / FRAME_MS) % FRAMES.length;
+
+        if (idx !== lastFrameIdx) {
+          lastFrameIdx = idx;
+          drawFrame(ctxLeft,  FRAMES[idx], false); /* faces right → */
+          drawFrame(ctxRight, FRAMES[idx], true);  /* faces left  ← */
+        }
+
+        requestAnimationFrame(animate);
+      }
+
+      /* draw frame 0 immediately so there's no blank canvas on load */
+      drawFrame(ctxLeft,  FRAMES[0], false);
+      drawFrame(ctxRight, FRAMES[0], true);
+      requestAnimationFrame(animate);
+
     })();
   </script>
 
