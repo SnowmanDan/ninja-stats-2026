@@ -479,30 +479,7 @@
 
 
     <!-- ================================================
-      SECTION 1: ROSTER
-      Every player on the team, sorted by jersey number.
-      Data comes from the `players` table in Supabase.
-    ================================================== -->
-    <section class="card" aria-labelledby="roster-heading">
-      <h2 class="section-title" id="roster-heading">Roster</h2>
-
-      <table>
-        <thead>
-          <tr>
-            <th scope="col">#</th>
-            <th scope="col">Player</th>
-          </tr>
-        </thead>
-        <!-- Rows injected by the Supabase data loader below -->
-        <tbody id="roster-tbody">
-          <tr><td colspan="2" class="loading-cell">Loading roster…</td></tr>
-        </tbody>
-      </table>
-    </section>
-
-
-    <!-- ================================================
-      SECTION 2: SEASON TOTALS
+      SECTION 1: SEASON TOTALS
       Cumulative goals and assists across all games
       played so far this season.
     ================================================== -->
@@ -608,6 +585,29 @@
         <!-- Rows injected by the Supabase data loader below -->
         <tbody id="game-stats-tbody">
           <tr><td colspan="4" class="loading-cell">Loading game stats…</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+
+    <!-- ================================================
+      SECTION 4: ROSTER
+      Every player on the team, sorted by jersey number.
+      Data comes from the `players` table in Supabase.
+    ================================================== -->
+    <section class="card" aria-labelledby="roster-heading">
+      <h2 class="section-title" id="roster-heading">Roster</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Player</th>
+          </tr>
+        </thead>
+        <!-- Rows injected by the Supabase data loader below -->
+        <tbody id="roster-tbody">
+          <tr><td colspan="2" class="loading-cell">Loading roster…</td></tr>
         </tbody>
       </table>
     </section>
