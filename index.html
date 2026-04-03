@@ -416,7 +416,32 @@
       table           { font-size: 1rem; }
     }
 
+    /* ===== LOADING / EMPTY STATE CELLS ==================
+       Shown while data is being fetched, or when a table
+       has no rows to display yet.
+    ====================================================== */
+    .loading-cell {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 20px !important;
+      font-style: italic;
+    }
+
+    .error-cell {
+      text-align: center;
+      color: #e57373;   /* soft red — readable on dark bg */
+      padding: 20px !important;
+    }
+
   </style>
+
+  <!--
+    SUPABASE CLIENT (loaded from CDN — no npm needed)
+    This script tag adds the `supabase` global to the page.
+    We call supabase.createClient() in the data loader below.
+  -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 </head>
 
 <body>
@@ -454,6 +479,29 @@
 
 
     <!-- ================================================
+      SECTION 1: ROSTER
+      Every player on the team, sorted by jersey number.
+      Data comes from the `players` table in Supabase.
+    ================================================== -->
+    <section class="card" aria-labelledby="roster-heading">
+      <h2 class="section-title" id="roster-heading">Roster</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Player</th>
+          </tr>
+        </thead>
+        <!-- Rows injected by the Supabase data loader below -->
+        <tbody id="roster-tbody">
+          <tr><td colspan="2" class="loading-cell">Loading roster…</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+
+    <!-- ================================================
       SECTION 2: SEASON TOTALS
       Cumulative goals and assists across all games
       played so far this season.
@@ -464,15 +512,16 @@
       <!-- W-L-T record summary at the top of this section -->
       <div class="record-bar" role="group" aria-label="Season record">
         <div class="record-item wins">
-          <span class="record-num">1</span>
+          <!-- id lets the data loader update this number -->
+          <span class="record-num" id="record-wins">–</span>
           <span class="record-label">Wins</span>
         </div>
         <div class="record-item losses">
-          <span class="record-num">0</span>
+          <span class="record-num" id="record-losses">–</span>
           <span class="record-label">Losses</span>
         </div>
         <div class="record-item ties">
-          <span class="record-num">0</span>
+          <span class="record-num" id="record-ties">–</span>
           <span class="record-label">Ties</span>
         </div>
       </div>
@@ -487,31 +536,9 @@
             <th scope="col" class="col-center" aria-label="Assists">🅰️ Assists</th>
           </tr>
         </thead>
-        <tbody>
-          <tr>
-            <td class="col-center"><span class="jersey-num">1</span></td>
-            <td>Eleonora</td>
-            <td class="col-center">2</td>
-            <td class="col-center">0</td>
-          </tr>
-          <tr>
-            <td class="col-center"><span class="jersey-num">2</span></td>
-            <td>Carolina</td>
-            <td class="col-center">1</td>
-            <td class="col-center">0</td>
-          </tr>
-          <tr>
-            <td class="col-center"><span class="jersey-num">3</span></td>
-            <td>Lucy</td>
-            <td class="col-center">1</td>
-            <td class="col-center">0</td>
-          </tr>
-          <tr>
-            <td class="col-center"><span class="jersey-num">4</span></td>
-            <td>Lucille</td>
-            <td class="col-center">1</td>
-            <td class="col-center">0</td>
-          </tr>
+        <!-- Rows injected by the Supabase data loader below -->
+        <tbody id="season-tbody">
+          <tr><td colspan="4" class="loading-cell">Loading season stats…</td></tr>
         </tbody>
       </table>
     </section>
@@ -527,28 +554,31 @@
 
       <!-- Date and location info above the scoreboard -->
       <p class="game-meta">
-        <span>📅 March 28, 2026</span>
+        <!-- id lets the data loader swap in the real date -->
+        <span id="last-game-date">Loading…</span>
       </p>
 
       <!-- The big score display -->
-      <div class="scoreboard" role="img" aria-label="Ninjas 5, Donovan 1">
+      <div id="scoreboard" class="scoreboard" role="img" aria-label="Loading score">
         <div class="score-team">
           <div class="score-team-name">Ninjas</div>
           <!-- "ours" class turns our score red -->
-          <div class="score-number ours">5</div>
+          <div class="score-number ours" id="last-game-our-score">–</div>
         </div>
 
         <div class="score-divider">–</div>
 
         <div class="score-team">
-          <div class="score-team-name">Donovan</div>
-          <div class="score-number">1</div>
+          <!-- opponent name and score are filled in by the data loader -->
+          <div class="score-team-name" id="last-game-opponent">…</div>
+          <div class="score-number" id="last-game-opp-score">–</div>
         </div>
       </div>
 
       <!-- Win/loss/tie badge shown below the scoreboard -->
       <p style="text-align:center; margin-top: 10px;">
-        <span class="result-badge win">Win</span>
+        <!-- class (win/loss/tie) and text are set by the data loader -->
+        <span id="last-game-result" class="result-badge">…</span>
       </p>
     </section>
 
@@ -559,7 +589,8 @@
       most recent game.
     ================================================== -->
     <section class="card" aria-labelledby="game-stats-heading">
-      <h2 class="section-title" id="game-stats-heading">Game Stats — March 28</h2>
+      <!-- Heading text is updated to include the real game date -->
+      <h2 class="section-title" id="game-stats-heading">Game Stats</h2>
 
       <table>
         <thead>
@@ -574,35 +605,9 @@
             <th scope="col" class="col-center" aria-label="Assists">🅰️ Assists</th>
           </tr>
         </thead>
-        <tbody>
-          <!--
-            Only include players who appeared in the game.
-            Goals and assists default to 0 if the player didn't score.
-          -->
-          <tr>
-            <td class="col-center"><span class="jersey-num">1</span></td>
-            <td>Eleonora</td>
-            <td class="col-center">2</td>
-            <td class="col-center">0</td>
-          </tr>
-          <tr>
-            <td class="col-center"><span class="jersey-num">2</span></td>
-            <td>Carolina</td>
-            <td class="col-center">1</td>
-            <td class="col-center">0</td>
-          </tr>
-          <tr>
-            <td class="col-center"><span class="jersey-num">3</span></td>
-            <td>Lucy</td>
-            <td class="col-center">1</td>
-            <td class="col-center">0</td>
-          </tr>
-          <tr>
-            <td class="col-center"><span class="jersey-num">4</span></td>
-            <td>Lucille</td>
-            <td class="col-center">1</td>
-            <td class="col-center">0</td>
-          </tr>
+        <!-- Rows injected by the Supabase data loader below -->
+        <tbody id="game-stats-tbody">
+          <tr><td colspan="4" class="loading-cell">Loading game stats…</td></tr>
         </tbody>
       </table>
     </section>
@@ -886,6 +891,253 @@
       drawFrame(ctxLeft,  FRAMES[0], false);
       drawFrame(ctxRight, FRAMES[0], true);
       requestAnimationFrame(animate);
+
+    })();
+  </script>
+
+  <script>
+    /*
+      ============================================================
+      SUPABASE DATA LOADER
+      Fetches live data from the database and populates:
+        - Roster table
+        - Season W-L-T record bar
+        - Season totals table (goals + assists per player)
+        - Last game scoreboard (score, opponent, result badge)
+        - Last game player stats table
+
+      How it works:
+        1. We create a Supabase client with our project URL and
+           anon key. The anon key is the PUBLIC key — it's safe
+           to include here. Row Level Security (RLS) in Supabase
+           controls what it can actually read or write.
+        2. We fire three queries in parallel using Promise.all,
+           so the page doesn't wait for one before starting the next.
+        3. Once all data arrives we build HTML strings and inject
+           them into the page with innerHTML.
+      ============================================================
+    */
+
+    (async function () {
+
+      /* ---- SUPABASE CREDENTIALS --------------------------------
+         Find these in: Supabase Dashboard → Project Settings → API
+         Use the "anon / public" key — NOT the "service_role" key.
+         Note: process.env.SUPABASE_KEY is a Node.js pattern and
+         does NOT work in browser JS — paste the key value directly.
+      ------------------------------------------------------------ */
+      const SUPABASE_URL      = 'https://vzktoeqmnezrcrqtuvkx.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6a3RvZXFtbmV6cmNycXR1dmt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxODI5MTgsImV4cCI6MjA5MDc1ODkxOH0.SO2yaLAQrmgRw_mIGK7mgQlQr5q5KCtvYvB5kzsKmPA';
+
+      /* createClient is provided by the CDN script in <head> */
+      const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      /* ---- HELPER: "2026-03-28" → "March 28, 2026" ------------
+         We append T00:00:00 to make JavaScript treat the date as
+         local midnight instead of UTC midnight, which would show
+         the wrong day in US time zones.
+      ------------------------------------------------------------ */
+      function formatDate(dateStr) {
+        const d = new Date(dateStr + 'T00:00:00');
+        return d.toLocaleDateString('en-US', {
+          month: 'long', day: 'numeric', year: 'numeric'
+        });
+      }
+
+      /* ---- HELPER: one <tr> for a 4-column stats table -------- */
+      function statsRow(number, name, goals, assists) {
+        return '<tr>' +
+          '<td class="col-center"><span class="jersey-num">' + number + '</span></td>' +
+          '<td>' + name + '</td>' +
+          '<td class="col-center">' + goals + '</td>' +
+          '<td class="col-center">' + assists + '</td>' +
+          '</tr>';
+      }
+
+      /* ---- HELPER: show an error message inside a table ------- */
+      function showTableError(tbodyId, colspan, message) {
+        var el = document.getElementById(tbodyId);
+        if (el) {
+          el.innerHTML = '<tr><td colspan="' + colspan + '" class="error-cell">' + message + '</td></tr>';
+        }
+      }
+
+      /* ---- FETCH ALL DATA IN PARALLEL -------------------------
+         Promise.all fires all three queries at the same time and
+         waits for all of them to finish — much faster than running
+         them one after the other.
+      ------------------------------------------------------------ */
+      var results = await Promise.all([
+
+        /* 1. All players, ordered by jersey number */
+        db.from('players')
+          .select('id, name, number')
+          .order('number'),
+
+        /* 2. All games, newest first (so games[0] = most recent) */
+        db.from('games')
+          .select('id, date, opponent, team_score, opponent_score')
+          .order('date', { ascending: false }),
+
+        /* 3. All game stats across every game (no join needed —
+              we'll look up player names from the players array) */
+        db.from('game_stats')
+          .select('game_id, player_id, goals, assists'),
+
+      ]);
+
+      var players  = results[0].data;
+      var e1       = results[0].error;
+      var games    = results[1].data;
+      var e2       = results[1].error;
+      var allStats = results[2].data;
+      var e3       = results[2].error;
+
+      /* If any query failed, show an error and stop */
+      if (e1 || e2 || e3) {
+        var err = e1 || e2 || e3;
+        console.error('Supabase error:', err);
+        var msg = 'Could not load data — check the browser console.';
+        showTableError('roster-tbody',     2, msg);
+        showTableError('season-tbody',     4, msg);
+        showTableError('game-stats-tbody', 4, msg);
+        return;
+      }
+
+      /* ==========================================================
+         ROSTER
+         Simple list of every player, sorted by jersey number
+         (the query already ordered them).
+      ========================================================== */
+      var rosterTbody = document.getElementById('roster-tbody');
+      if (players.length === 0) {
+        rosterTbody.innerHTML = '<tr><td colspan="2" class="loading-cell">No players found.</td></tr>';
+      } else {
+        rosterTbody.innerHTML = players.map(function (p) {
+          return '<tr>' +
+            '<td class="col-center"><span class="jersey-num">' + p.number + '</span></td>' +
+            '<td>' + p.name + '</td>' +
+            '</tr>';
+        }).join('');
+      }
+
+      /* ==========================================================
+         BUILD PLAYER LOOKUP MAP
+         playerMap[id] = { name, number, goals: 0, assists: 0 }
+         We use this both for season totals and for the per-game
+         stats display, so we only need to build it once.
+      ========================================================== */
+      var playerMap = {};
+      players.forEach(function (p) {
+        playerMap[p.id] = { name: p.name, number: p.number, goals: 0, assists: 0 };
+      });
+
+      /* ==========================================================
+         SEASON RECORD (W-L-T)
+         Count wins, losses, and ties across every game.
+      ========================================================== */
+      var wins = 0, losses = 0, ties = 0;
+      games.forEach(function (g) {
+        if      (g.team_score > g.opponent_score) { wins++;   }
+        else if (g.team_score < g.opponent_score) { losses++; }
+        else                                      { ties++;   }
+      });
+      document.getElementById('record-wins').textContent   = wins;
+      document.getElementById('record-losses').textContent = losses;
+      document.getElementById('record-ties').textContent   = ties;
+
+      /* ==========================================================
+         SEASON TOTALS
+         Add up goals and assists across every game for each player.
+         Only show players who have at least one goal or assist.
+         Sort by goals ↓, then assists ↓, then jersey number ↑.
+      ========================================================== */
+      allStats.forEach(function (s) {
+        if (playerMap[s.player_id]) {
+          playerMap[s.player_id].goals   += s.goals;
+          playerMap[s.player_id].assists += s.assists;
+        }
+      });
+
+      var seasonRows = Object.values(playerMap)
+        .filter(function (p) { return p.goals > 0 || p.assists > 0; })
+        .sort(function (a, b) {
+          /* primary: most goals first */
+          if (b.goals !== a.goals)     { return b.goals   - a.goals;   }
+          /* tiebreaker: most assists first */
+          if (b.assists !== a.assists) { return b.assists - a.assists; }
+          /* final tiebreaker: lower jersey number first */
+          return a.number - b.number;
+        });
+
+      var seasonTbody = document.getElementById('season-tbody');
+      seasonTbody.innerHTML = seasonRows.length === 0
+        ? '<tr><td colspan="4" class="loading-cell">No stats recorded yet this season.</td></tr>'
+        : seasonRows.map(function (p) { return statsRow(p.number, p.name, p.goals, p.assists); }).join('');
+
+      /* ==========================================================
+         LAST GAME SCOREBOARD
+         games is sorted newest-first, so games[0] is the most
+         recent game.
+      ========================================================== */
+      var lastGame = games[0];
+      if (!lastGame) {
+        showTableError('game-stats-tbody', 4, 'No games played yet.');
+        return;
+      }
+
+      var teamScore = lastGame.team_score;
+      var oppScore  = lastGame.opponent_score;
+
+      /* Figure out win / loss / tie */
+      var result =
+        teamScore > oppScore ? 'win'  :
+        teamScore < oppScore ? 'loss' : 'tie';
+      var resultLabel =
+        result === 'win'  ? 'Win'  :
+        result === 'loss' ? 'Loss' : 'Tie';
+
+      /* Update the date line */
+      document.getElementById('last-game-date').textContent = '📅 ' + formatDate(lastGame.date);
+
+      /* Update the scoreboard's accessible label */
+      document.getElementById('scoreboard').setAttribute(
+        'aria-label', 'Ninjas ' + teamScore + ', ' + lastGame.opponent + ' ' + oppScore
+      );
+
+      /* Update the two scores and opponent name */
+      document.getElementById('last-game-our-score').textContent = teamScore;
+      document.getElementById('last-game-opponent').textContent  = lastGame.opponent;
+      document.getElementById('last-game-opp-score').textContent = oppScore;
+
+      /* Update the win/loss/tie badge (text + CSS class) */
+      var badge = document.getElementById('last-game-result');
+      badge.textContent = resultLabel;
+      badge.className   = 'result-badge ' + result;
+
+      /* Update the Game Stats section heading to show the date */
+      document.getElementById('game-stats-heading').textContent =
+        'Game Stats — ' + formatDate(lastGame.date);
+
+      /* ==========================================================
+         PER-GAME PLAYER STATS
+         Filter the allStats array down to just this game, then
+         look up each player's name and number from playerMap.
+         This reuses data we already fetched — no extra DB query.
+      ========================================================== */
+      var thisGameStats = allStats
+        .filter(function (s) { return s.game_id === lastGame.id; })
+        .map(function (s) {
+          /* Look up this player in our map (fall back if not found) */
+          var player = playerMap[s.player_id] || { name: 'Unknown', number: '?' };
+          return { number: player.number, name: player.name, goals: s.goals, assists: s.assists };
+        })
+        .sort(function (a, b) { return a.number - b.number; });
+
+      var gameStatsTbody = document.getElementById('game-stats-tbody');
+      gameStatsTbody.innerHTML = thisGameStats.length === 0
+        ? '<tr><td colspan="4" class="loading-cell">No stats recorded for this game yet.</td></tr>'
+        : thisGameStats.map(function (s) { return statsRow(s.number, s.name, s.goals, s.assists); }).join('');
 
     })();
   </script>
