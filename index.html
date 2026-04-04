@@ -14,6 +14,32 @@
   <title>Ninjas Soccer — Spring 2026</title>
 
   <!--
+    favicon: the pixel-art player from the top of the page, saved as an SVG.
+    SVG favicons scale perfectly at any size and keep the crisp pixel look.
+    The type attribute tells the browser it's an SVG, not a traditional .ico file.
+  -->
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+
+  <!--
+    Open Graph tags — control how the page appears when shared on social media
+    (Facebook, iMessage, Slack, Discord, etc.). og:title and og:description set
+    the preview text; og:image sets the thumbnail shown in the link card.
+
+    Twitter/X uses its own "twitter:" tags but falls back to og: if they're
+    absent, so we only need the og: set for most cases.
+  -->
+  <meta property="og:type"        content="website" />
+  <meta property="og:title"       content="Ninjas Soccer — Spring 2026" />
+  <meta property="og:description" content="Roster, season stats, and game results for the Ninjas youth soccer team." />
+
+  <!--
+    og:image should point to an absolute URL once the site is hosted.
+    Replace the placeholder below with the real URL of a preview image
+    (ideally 1200×630 px — the standard social card size).
+  -->
+  <!-- <meta property="og:image" content="https://your-site-url/preview.png" /> -->
+
+  <!--
     ============================================================
     STYLES
     All CSS lives here in a <style> tag for simplicity.
