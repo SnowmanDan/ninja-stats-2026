@@ -248,63 +248,6 @@
       border-radius: 50%;  /* makes it a circle */
     }
 
-    /* ===== LAST GAME SUMMARY =============================
-       A big score display and match details, not a table.
-    ====================================================== */
-    .game-meta {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-bottom: 16px;
-    }
-
-    .game-meta span {
-      margin-right: 16px;
-    }
-
-    .scoreboard {
-      display: flex;          /* flexbox lines things up in a row */
-      align-items: center;    /* vertically center all items */
-      justify-content: center;
-      gap: 16px;
-      /* Darker than the card itself, like a TV broadcast scorebug */
-      background: #0a0a0a;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-      margin-bottom: 8px;
-    }
-
-    .score-team {
-      text-align: center;
-      color: var(--white);
-      flex: 1;  /* each team takes equal space */
-    }
-
-    .score-team-name {
-      font-size: 0.85rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      opacity: 0.75;
-      margin-bottom: 4px;
-    }
-
-    .score-number {
-      font-size: 3rem;
-      font-weight: 900;
-      line-height: 1;
-    }
-
-    /* Highlight our team's score in red */
-    .score-number.ours {
-      color: var(--red);
-    }
-
-    .score-divider {
-      color: var(--text-muted);
-      font-size: 1.5rem;
-      font-weight: 300;
-    }
-
     .result-badge {
       display: inline-block;
       padding: 4px 12px;
@@ -522,41 +465,27 @@
 
 
     <!-- ================================================
-      SECTION 3: LAST GAME
-      A visual scoreboard and match details for the
-      most recent game.
+      SECTION 3: GAME HISTORY
+      A table showing every game played — date, opponent,
+      score, and win/loss/tie result.
     ================================================== -->
-    <section class="card" aria-labelledby="last-game-heading">
-      <h2 class="section-title" id="last-game-heading">Last Game</h2>
+    <section class="card" aria-labelledby="game-history-heading">
+      <h2 class="section-title" id="game-history-heading">Game History</h2>
 
-      <!-- Date and location info above the scoreboard -->
-      <p class="game-meta">
-        <!-- id lets the data loader swap in the real date -->
-        <span id="last-game-date">Loading…</span>
-      </p>
-
-      <!-- The big score display -->
-      <div id="scoreboard" class="scoreboard" role="img" aria-label="Loading score">
-        <div class="score-team">
-          <div class="score-team-name">Ninjas</div>
-          <!-- "ours" class turns our score red -->
-          <div class="score-number ours" id="last-game-our-score">–</div>
-        </div>
-
-        <div class="score-divider">–</div>
-
-        <div class="score-team">
-          <!-- opponent name and score are filled in by the data loader -->
-          <div class="score-team-name" id="last-game-opponent">…</div>
-          <div class="score-number" id="last-game-opp-score">–</div>
-        </div>
-      </div>
-
-      <!-- Win/loss/tie badge shown below the scoreboard -->
-      <p style="text-align:center; margin-top: 10px;">
-        <!-- class (win/loss/tie) and text are set by the data loader -->
-        <span id="last-game-result" class="result-badge">…</span>
-      </p>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Date</th>
+            <th scope="col">Opponent</th>
+            <th scope="col" class="col-center">Score</th>
+            <th scope="col" class="col-center">Result</th>
+          </tr>
+        </thead>
+        <!-- Rows injected by the Supabase data loader below -->
+        <tbody id="game-history-tbody">
+          <tr><td colspan="4" class="loading-cell">Loading game history…</td></tr>
+        </tbody>
+      </table>
     </section>
 
 
@@ -903,7 +832,7 @@
         - Roster table
         - Season W-L-T record bar
         - Season totals table (goals + assists per player)
-        - Last game scoreboard (score, opponent, result badge)
+        - Game history table (date, opponent, score, result per game)
         - Last game player stats table
 
       How it works:
@@ -1076,44 +1005,40 @@
         : seasonRows.map(function (p) { return statsRow(p.number, p.name, p.goals, p.assists); }).join('');
 
       /* ==========================================================
-         LAST GAME SCOREBOARD
-         games is sorted newest-first, so games[0] is the most
-         recent game.
+         GAME HISTORY TABLE
+         Loop over every game (newest-first from the query) and
+         build one row: date, opponent, score (us–them), result.
       ========================================================== */
+      var gameHistoryTbody = document.getElementById('game-history-tbody');
+      if (games.length === 0) {
+        gameHistoryTbody.innerHTML = '<tr><td colspan="4" class="loading-cell">No games played yet.</td></tr>';
+      } else {
+        gameHistoryTbody.innerHTML = games.map(function (g) {
+          /* Determine result for this game */
+          var result =
+            g.team_score > g.opponent_score ? 'win'  :
+            g.team_score < g.opponent_score ? 'loss' : 'tie';
+          var resultLabel =
+            result === 'win'  ? 'Win'  :
+            result === 'loss' ? 'Loss' : 'Tie';
+
+          return '<tr>' +
+            '<td>' + formatDate(g.date) + '</td>' +
+            '<td>' + g.opponent + '</td>' +
+            /* Score shown as "us – them" so it reads like a game result */
+            '<td class="col-center">' + g.team_score + '–' + g.opponent_score + '</td>' +
+            '<td class="col-center"><span class="result-badge ' + result + '">' + resultLabel + '</span></td>' +
+            '</tr>';
+        }).join('');
+      }
+
+      /* games[0] is the most recent game — needed for the Game Stats
+         section below (shows per-player stats for that game) */
       var lastGame = games[0];
       if (!lastGame) {
         showTableError('game-stats-tbody', 4, 'No games played yet.');
         return;
       }
-
-      var teamScore = lastGame.team_score;
-      var oppScore  = lastGame.opponent_score;
-
-      /* Figure out win / loss / tie */
-      var result =
-        teamScore > oppScore ? 'win'  :
-        teamScore < oppScore ? 'loss' : 'tie';
-      var resultLabel =
-        result === 'win'  ? 'Win'  :
-        result === 'loss' ? 'Loss' : 'Tie';
-
-      /* Update the date line */
-      document.getElementById('last-game-date').textContent = '📅 ' + formatDate(lastGame.date);
-
-      /* Update the scoreboard's accessible label */
-      document.getElementById('scoreboard').setAttribute(
-        'aria-label', 'Ninjas ' + teamScore + ', ' + lastGame.opponent + ' ' + oppScore
-      );
-
-      /* Update the two scores and opponent name */
-      document.getElementById('last-game-our-score').textContent = teamScore;
-      document.getElementById('last-game-opponent').textContent  = lastGame.opponent;
-      document.getElementById('last-game-opp-score').textContent = oppScore;
-
-      /* Update the win/loss/tie badge (text + CSS class) */
-      var badge = document.getElementById('last-game-result');
-      badge.textContent = resultLabel;
-      badge.className   = 'result-badge ' + result;
 
       /* Update the Game Stats section heading to show the date */
       document.getElementById('game-stats-heading').textContent =
