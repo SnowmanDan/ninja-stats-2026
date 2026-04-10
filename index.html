@@ -362,6 +362,95 @@
       z-index: 9999;
     }
 
+    /* ===== COLLAPSIBLE SECTION ==========================
+       The Goalie Stats section starts collapsed. Clicking
+       the header toggles the content open/closed.
+       We use a <button> for the title so it's keyboard-
+       accessible and gets the right cursor automatically.
+    ====================================================== */
+
+    /* The toggle button reuses .section-title colors but
+       removes default button chrome and spans full width */
+    .section-title-toggle {
+      width: 100%;
+      background: none;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      padding: 0;
+      /* Inherit font so it looks like every other section title */
+      font-family: inherit;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--red);
+      border-left: 4px solid var(--red);
+      padding-left: 10px;
+      /* No bottom margin — content appears below only when open */
+      margin-bottom: 0;
+    }
+
+    .section-title-toggle:hover {
+      color: #ff3333; /* slightly brighter red on hover */
+    }
+
+    .toggle-icon {
+      font-size: 0.6rem;
+      flex-shrink: 0;
+      margin-left: 8px;
+      /* A tiny rotation transition makes expand/collapse feel smooth */
+      transition: transform 0.2s ease;
+    }
+
+    /* The content area — hidden until the button is clicked */
+    .collapsible-content {
+      display: none;
+      margin-top: 16px;
+    }
+
+    .collapsible-content.open {
+      display: block;
+    }
+
+    /* Sub-section label inside the goalie card ("Season Totals",
+       "By Game") — smaller and muted, with a rule underneath */
+    .subsection-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin: 20px 0 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* First sub-section label sits right against the top —
+       the collapsible-content's margin-top is enough spacing */
+    .subsection-label:first-child {
+      margin-top: 0;
+    }
+
+    /* Wrapper for a single game's goalie table in "By Game" */
+    .game-goalie-block {
+      margin-bottom: 20px;
+    }
+
+    .game-goalie-block:last-child {
+      margin-bottom: 0;
+    }
+
+    /* The "April 3, 2026 vs Tocco" label above each mini-table */
+    .game-goalie-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
     /* ===== FOOTER ======================================= */
     footer {
       text-align: center;
@@ -565,6 +654,62 @@
           <tr><td colspan="2" class="loading-cell">Loading roster…</td></tr>
         </tbody>
       </table>
+    </section>
+
+
+    <!-- ================================================
+      SECTION 5: GOALIE STATS
+      Collapsible card — collapsed by default.
+      Shows who played in goal, for how long, and how
+      many goals they allowed, both for the full season
+      and broken out by individual game.
+    ================================================== -->
+    <section class="card" aria-labelledby="goalie-stats-heading">
+
+      <!--
+        We use a <button> for the heading so that keyboard users
+        can tab to it and press Enter/Space to toggle — the same
+        behavior they'd get from a native <details>/<summary>.
+        aria-expanded tells screen readers whether the content is
+        currently visible; aria-controls points to the content div.
+      -->
+      <button
+        class="section-title section-title-toggle"
+        id="goalie-stats-heading"
+        aria-expanded="false"
+        aria-controls="goalie-stats-content"
+      >
+        Goalie Stats
+        <!-- ▶ rotates to ▼ via JS when expanded -->
+        <span class="toggle-icon" aria-hidden="true">▶</span>
+      </button>
+
+      <!-- This div starts hidden; JS adds the "open" class on click -->
+      <div class="collapsible-content" id="goalie-stats-content">
+
+        <!-- Sub-section A: cumulative season totals -->
+        <p class="subsection-label">Season Totals</p>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Player</th>
+              <th scope="col" class="col-center">Games in Goal</th>
+              <th scope="col" class="col-center">Minutes</th>
+              <th scope="col" class="col-center">Goals Allowed</th>
+            </tr>
+          </thead>
+          <!-- Rows injected by the Supabase data loader below -->
+          <tbody id="goalie-season-tbody">
+            <tr><td colspan="4" class="loading-cell">Loading goalie stats…</td></tr>
+          </tbody>
+        </table>
+
+        <!-- Sub-section B: per-game breakdown, newest first -->
+        <p class="subsection-label">By Game</p>
+        <!-- Each game gets its own mini-table; injected by the loader -->
+        <div id="goalie-by-game"></div>
+
+      </div>
     </section>
 
 
@@ -935,9 +1080,11 @@
           .order('date', { ascending: false }),
 
         /* 3. All game stats across every game (no join needed —
-              we'll look up player names from the players array) */
+              we'll look up player names from the players array).
+              Also fetch minutes_in_goal and goals_allowed for
+              the new Goalie Stats section. */
         db.from('game_stats')
-          .select('game_id, player_id, goals, assists'),
+          .select('game_id, player_id, goals, assists, minutes_in_goal, goals_allowed'),
 
       ]);
 
@@ -1089,6 +1236,129 @@
       gameStatsTbody.innerHTML = thisGameStats.length === 0
         ? '<tr><td colspan="4" class="loading-cell">No stats recorded for this game yet.</td></tr>'
         : thisGameStats.map(function (s) { return statsRow(s.number, s.name, s.goals, s.assists); }).join('');
+
+      /* ==========================================================
+         GOALIE STATS — SEASON TOTALS
+         Walk through all stats rows. Any row with minutes_in_goal > 0
+         counts as a goalie appearance for that player in that game.
+         We accumulate into a per-player map, then sort by total
+         minutes descending so the primary goalie floats to the top.
+      ========================================================== */
+
+      /* Build a fresh goalie map — separate from the scoring playerMap
+         so goalie data stays cleanly isolated. */
+      var goalieMap = {};
+
+      allStats.forEach(function (s) {
+        /* Only count rows where the player was actually in goal */
+        if (!s.minutes_in_goal || s.minutes_in_goal <= 0) return;
+
+        if (!goalieMap[s.player_id]) {
+          /* First goalie appearance for this player — initialize entry */
+          var gp = playerMap[s.player_id] || { name: 'Unknown', number: '?' };
+          goalieMap[s.player_id] = {
+            name:         gp.name,
+            gamesInGoal:  0,
+            minutes:      0,
+            goalsAllowed: 0
+          };
+        }
+
+        goalieMap[s.player_id].gamesInGoal  += 1;
+        goalieMap[s.player_id].minutes      += s.minutes_in_goal;
+        goalieMap[s.player_id].goalsAllowed += (s.goals_allowed || 0);
+      });
+
+      /* Sort by total minutes descending */
+      var goalieRows = Object.values(goalieMap)
+        .sort(function (a, b) { return b.minutes - a.minutes; });
+
+      var goalieTbody = document.getElementById('goalie-season-tbody');
+      goalieTbody.innerHTML = goalieRows.length === 0
+        ? '<tr><td colspan="4" class="loading-cell">No goalie data recorded yet.</td></tr>'
+        : goalieRows.map(function (g) {
+            return '<tr>' +
+              '<td>' + g.name + '</td>' +
+              '<td class="col-center">' + g.gamesInGoal + '</td>' +
+              '<td class="col-center">' + g.minutes + '</td>' +
+              '<td class="col-center">' + g.goalsAllowed + '</td>' +
+              '</tr>';
+          }).join('');
+
+      /* ==========================================================
+         GOALIE STATS — BY GAME
+         Iterate over games (already newest-first from the query).
+         For each game, find stats rows where someone played goalie.
+         Skip games with no goalie data entirely.
+      ========================================================== */
+      var goalieByGameHtml = '';
+
+      games.forEach(function (g) {
+        /* Find goalie entries for this game */
+        var gameGoalieStats = allStats
+          .filter(function (s) { return s.game_id === g.id && s.minutes_in_goal > 0; })
+          .map(function (s) {
+            var player = playerMap[s.player_id] || { name: 'Unknown' };
+            return {
+              name:         player.name,
+              minutes:      s.minutes_in_goal,
+              goalsAllowed: s.goals_allowed || 0
+            };
+          })
+          /* Most minutes first within a game (handles shared-goalie games) */
+          .sort(function (a, b) { return b.minutes - a.minutes; });
+
+        /* Skip this game entirely if nobody has goalie minutes logged */
+        if (gameGoalieStats.length === 0) return;
+
+        var gameLabel = formatDate(g.date) + ' vs ' + g.opponent;
+
+        goalieByGameHtml +=
+          '<div class="game-goalie-block">' +
+          '<p class="game-goalie-label">' + gameLabel + '</p>' +
+          '<table>' +
+          '<thead><tr>' +
+          '<th scope="col">Player</th>' +
+          '<th scope="col" class="col-center">Minutes</th>' +
+          '<th scope="col" class="col-center">Goals Allowed</th>' +
+          '</tr></thead>' +
+          '<tbody>' +
+          gameGoalieStats.map(function (s) {
+            return '<tr>' +
+              '<td>' + s.name + '</td>' +
+              '<td class="col-center">' + s.minutes + '</td>' +
+              '<td class="col-center">' + s.goalsAllowed + '</td>' +
+              '</tr>';
+          }).join('') +
+          '</tbody>' +
+          '</table>' +
+          '</div>';
+      });
+
+      var goalieByGameEl = document.getElementById('goalie-by-game');
+      goalieByGameEl.innerHTML = goalieByGameHtml ||
+        '<p style="color: var(--text-muted); font-style: italic; font-size: 0.9rem; padding: 4px 0;">No per-game goalie data recorded yet.</p>';
+
+      /* ==========================================================
+         GOALIE STATS — COLLAPSE / EXPAND TOGGLE
+         The <button> starts with aria-expanded="false" and the
+         content div has no "open" class (so display: none).
+         Clicking flips both, giving visual + screen-reader feedback.
+      ========================================================== */
+      var goalieBtn     = document.getElementById('goalie-stats-heading');
+      var goalieContent = document.getElementById('goalie-stats-content');
+      var toggleIcon    = goalieBtn.querySelector('.toggle-icon');
+
+      goalieBtn.addEventListener('click', function () {
+        /* classList.toggle returns true if the class was added */
+        var isOpen = goalieContent.classList.toggle('open');
+
+        /* Keep aria-expanded in sync so screen readers know the state */
+        goalieBtn.setAttribute('aria-expanded', isOpen);
+
+        /* Swap the triangle indicator */
+        toggleIcon.textContent = isOpen ? '▼' : '▶';
+      });
 
     })();
   </script>
