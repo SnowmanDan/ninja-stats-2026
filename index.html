@@ -500,6 +500,18 @@
   -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+  <!--
+    VERCEL WEB ANALYTICS
+    Tracks page views and web vitals when deployed to Vercel.
+    The va function queues analytics calls until the script loads.
+    The /_vercel/insights/script.js path is automatically served by Vercel
+    when Web Analytics is enabled in the project dashboard.
+  -->
+  <script>
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+  </script>
+  <script defer src="/_vercel/insights/script.js"></script>
+
 </head>
 
 <body>
