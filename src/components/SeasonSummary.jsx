@@ -43,14 +43,6 @@ function SeasonSummary({ record, players }) {
           <span className="record-num">{record.ties}</span>
           <span className="record-label">Ties</span>
         </div>
-        <div className="record-item goals-for">
-          <span className="record-num">{record.goalsFor}</span>
-          <span className="record-label">Goals For</span>
-        </div>
-        <div className="record-item goals-against">
-          <span className="record-num">{record.goalsAgainst}</span>
-          <span className="record-label">Against</span>
-        </div>
       </div>
 
       {/*
