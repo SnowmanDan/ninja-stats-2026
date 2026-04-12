@@ -8,18 +8,14 @@ import react from '@vitejs/plugin-react'
 //   (hot module replacement — changes appear instantly in the browser without a full reload)
 export default defineConfig({
   plugins: [react()],
-  // Point Vite at our React entry point instead of the existing index.html
-  // so the two can coexist during the migration.
+  // Vite's default entry point is index.html at the project root,
+  // so no custom input needed now that the React HTML is named index.html.
   root: '.',
   build: {
     outDir: 'dist',
-    rollupOptions: {
-      // Tell the bundler which HTML file is the app entry point.
-      input: 'react-index.html',
-    },
   },
-  // Also tell the dev server to use our React HTML file.
+  // Open the app automatically when running `npm run dev`.
   server: {
-    open: '/react-index.html',
+    open: '/',
   },
 })
