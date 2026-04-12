@@ -1,0 +1,352 @@
+/*
+  index.css — global styles for the React app.
+  These are ported directly from legacy.html so the new React build
+  looks identical to the original site while the migration is in progress.
+
+  Organization mirrors the original:
+    1. CSS variables (theme colors)
+    2. Reset & base
+    3. Layout wrapper
+    4. Header
+    5. Cards (section containers)
+    6. Section titles
+    7. Tables
+    8. Badges & pills
+    9. Season record bar
+   10. Collapsible (GoalieStats)
+   11. Footer
+   12. Responsive overrides
+*/
+
+/* ===== 1. CSS VARIABLES ==========================================
+   All theme colors live here. Change --red once and every accent
+   updates automatically throughout the page.
+================================================================= */
+:root {
+  --red:          #cc0000;
+  --red-dark:     #990000;
+  --bg-page:      #0d0d0d;
+  --bg-card:      #1a1a1a;
+  --bg-card-alt:  #222222;
+  --bg-header:    #111111;
+  --white:        #ffffff;
+  --text-primary: #eeeeee;
+  --text-muted:   #888888;
+  --border:       #2e2e2e;
+  --radius:       8px;
+}
+
+/* ===== 2. RESET & BASE ==========================================
+   Remove browser default margins/padding and normalize box-sizing
+   so every element behaves predictably.
+================================================================= */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+/* ===== 3. LAYOUT WRAPPER ========================================
+   Centers all content and caps the width at a comfortable reading
+   size on wide screens.
+================================================================= */
+.page-wrapper {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 16px 40px;
+}
+
+/* ===== 4. HEADER ================================================
+   Dark bar with a bold red bottom stripe — ESPN scoreboard style.
+================================================================= */
+header {
+  background: var(--bg-header);
+  color: var(--white);
+  text-align: center;
+  padding: 32px 16px 24px;
+  margin-bottom: 24px;
+  border-bottom: 4px solid var(--red);
+  /* Bleed the header to the full viewport width despite the wrapper padding */
+  margin-left: -16px;
+  margin-right: -16px;
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.header-center {
+  text-align: center;
+  flex: 1;
+}
+
+.team-name {
+  font-size: 3rem;
+  font-weight: 900;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  text-shadow: 2px 2px 6px rgba(0,0,0,0.4);
+}
+
+.season-label {
+  font-size: 1rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  opacity: 0.85;
+  margin-top: 6px;
+}
+
+.district-label {
+  font-size: 0.85rem;
+  opacity: 0.7;
+  margin-top: 4px;
+}
+
+/* ===== 5. CARDS =================================================
+   Each section lives in a card — a slightly lighter surface that
+   floats above the dark page background. The red top stripe is the
+   ESPN-style section accent.
+================================================================= */
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 20px;
+  border-top: 3px solid var(--red);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.50);
+}
+
+/* ===== 6. SECTION TITLES ========================================
+   Red left-border accent + uppercase label, like ESPN segment headers.
+================================================================= */
+.section-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--red);
+  border-left: 4px solid var(--red);
+  padding-left: 10px;
+  margin-bottom: 16px;
+}
+
+/* ===== 7. TABLES ================================================
+   width:100% fills the card. border-collapse removes the gap
+   between adjacent cell borders.
+================================================================= */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+thead th {
+  background-color: #0a0a0a;
+  color: var(--text-muted);
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+thead th:first-child { border-radius: var(--radius) 0 0 0; }
+thead th:last-child  { border-radius: 0 var(--radius) 0 0; }
+
+tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Zebra striping for long tables */
+tbody tr:nth-child(even) {
+  background-color: var(--bg-card-alt);
+}
+
+tbody tr:hover {
+  background-color: #2a0a0a;
+}
+
+.col-center {
+  text-align: center;
+}
+
+/* ===== 8. BADGES & PILLS ========================================
+   jersey-num: red circle badge for jersey numbers
+   result-badge: pill for Win / Loss / Tie
+================================================================= */
+.jersey-num {
+  display: inline-block;
+  background-color: var(--red);
+  color: var(--white);
+  font-weight: 700;
+  font-size: 0.8rem;
+  width: 28px;
+  height: 28px;
+  line-height: 28px;
+  text-align: center;
+  border-radius: 50%;
+}
+
+.result-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.result-badge.win  { background: #0f2e18; color: #4caf6e; border: 1px solid #1a5c2a; }
+.result-badge.loss { background: #2e0f0f; color: #e57373; border: 1px solid var(--red-dark); }
+.result-badge.tie  { background: #2a2000; color: #f0c040; border: 1px solid #856404; }
+
+/* ===== 9. SEASON RECORD BAR =====================================
+   W / L / T boxes shown at the top of SeasonSummary.
+   Each box fills equal space with flex: 1.
+================================================================= */
+.record-bar {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.record-item {
+  text-align: center;
+  flex: 1;
+  background: #0a0a0a;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px;
+}
+
+.record-item .record-num {
+  font-size: 1.8rem;
+  font-weight: 900;
+  line-height: 1;
+  display: block;
+}
+
+.record-item .record-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.record-item.wins   .record-num { color: #4caf6e; }
+.record-item.losses .record-num { color: var(--red); }
+.record-item.ties   .record-num { color: #f0c040; }
+.record-item.goals-for   .record-num { color: var(--text-primary); }
+.record-item.goals-against .record-num { color: var(--text-muted); }
+
+/* ===== 10. COLLAPSIBLE (GoalieStats) ============================
+   The toggle button looks like a section title but spans full width
+   and rotates the arrow icon when expanded.
+================================================================= */
+.section-title-toggle {
+  width: 100%;
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 0;
+  padding-left: 10px;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--red);
+  border-left: 4px solid var(--red);
+  margin-bottom: 0;
+}
+
+.section-title-toggle:hover {
+  color: #ff3333;
+}
+
+.toggle-icon {
+  font-size: 0.6rem;
+  flex-shrink: 0;
+  margin-left: 8px;
+  transition: transform 0.2s ease;
+}
+
+.toggle-icon.open {
+  transform: rotate(90deg);
+}
+
+.collapsible-content {
+  margin-top: 16px;
+}
+
+/* Sub-labels inside the goalie card ("Season Totals", "By Game") */
+.subsection-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 20px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.subsection-label:first-child {
+  margin-top: 0;
+}
+
+.game-goalie-block {
+  margin-bottom: 20px;
+}
+
+.game-goalie-block:last-child {
+  margin-bottom: 0;
+}
+
+.game-goalie-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+/* ===== 11. FOOTER =============================================== */
+footer {
+  text-align: center;
+  padding: 24px 16px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ===== 12. RESPONSIVE: LARGER SCREENS ==========================
+   Mobile-first: base styles above target small screens.
+   These overrides kick in once there's enough room to go bigger.
+================================================================= */
+@media (min-width: 480px) {
+  .team-name { font-size: 3.5rem; }
+  table      { font-size: 1rem; }
+}
