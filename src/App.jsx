@@ -18,6 +18,8 @@ import './index.css'
 
 import Confetti      from './components/Confetti'
 import GameHistory   from './components/GameHistory'
+import GameLogger    from './components/GameLogger'
+import GameSetup     from './components/GameSetup'
 import GoalieStats   from './components/GoalieStats'
 import PixelPlayers  from './components/PixelPlayers'
 import Roster        from './components/Roster'
@@ -71,6 +73,21 @@ function App() {
   const [games,    setGames]    = useState([])
   const [allStats, setAllStats] = useState([])
 
+  /*
+    View routing — which screen is active?
+      'dashboard' — the normal stats page (default)
+      'setup'     — GameSetup form to create a new game
+      'logger'    — GameLogger UI for the active game
+
+    activeGame holds the Supabase row for the game being logged.
+
+    refreshKey increments when the user returns to the dashboard so
+    useEffect re-runs the data fetch and picks up the new game.
+  */
+  const [view,       setView]       = useState('dashboard')
+  const [activeGame, setActiveGame] = useState(null)
+  const [refreshKey, setRefreshKey] = useState(0)
+
   /* ---- Data fetching ------------------------------------------ */
 
   /*
@@ -118,7 +135,57 @@ function App() {
     }
 
     fetchAll()
-  }, []) // [] = run once on mount, never again
+  }, [refreshKey]) // re-runs whenever refreshKey changes (e.g. after returning from logger)
+
+  /* ---- View callbacks ----------------------------------------- */
+
+  /*
+    Called by GameSetup after it successfully inserts a game row.
+    We store the new game and switch to the logger view.
+    No refetch needed yet — the dashboard isn't visible.
+  */
+  function handleGameCreated(newGame) {
+    setActiveGame(newGame)
+    setView('logger')
+  }
+
+  /*
+    Called by GameLogger's "Back to Dashboard" button.
+    Incrementing refreshKey causes useEffect to re-run the data
+    fetch so the dashboard shows the new game right away.
+  */
+  function handleBackToDashboard() {
+    setView('dashboard')
+    setRefreshKey((k) => k + 1)
+  }
+
+  /* ---- Non-dashboard views ------------------------------------ */
+
+  /*
+    Render setup/logger immediately — they don't need the fetched
+    data, so we don't wait for loading to finish.
+  */
+  if (view === 'setup') {
+    return (
+      <div className="page-wrapper">
+        <PageHeader />
+        <GameSetup
+          db={db}
+          onGameCreated={handleGameCreated}
+          onCancel={() => setView('dashboard')}
+        />
+      </div>
+    )
+  }
+
+  if (view === 'logger') {
+    return (
+      <div className="page-wrapper">
+        <PageHeader />
+        <GameLogger game={activeGame} db={db} players={players} onBack={handleBackToDashboard} />
+      </div>
+    )
+  }
 
   /* ---- Loading & error states --------------------------------- */
 
@@ -263,6 +330,13 @@ function App() {
     <div className="page-wrapper">
       <Confetti active={isLastGameWin} />
       <PageHeader />
+
+      {/* New Game button — prominent CTA at the top of the dashboard */}
+      <div className="new-game-bar">
+        <button className="btn btn-primary" onClick={() => setView('setup')}>
+          + New Game
+        </button>
+      </div>
 
       <SeasonSummary record={record} players={seasonPlayers} />
       <GameHistory   games={gameHistory} />
