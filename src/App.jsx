@@ -16,8 +16,10 @@ import { createClient } from '@supabase/supabase-js'
 
 import './index.css'
 
+import Confetti      from './components/Confetti'
 import GameHistory   from './components/GameHistory'
 import GoalieStats   from './components/GoalieStats'
+import PixelPlayers  from './components/PixelPlayers'
 import Roster        from './components/Roster'
 import SeasonSummary from './components/SeasonSummary'
 import StatsTable    from './components/StatsTable'
@@ -128,6 +130,7 @@ function App() {
   if (loading) {
     return (
       <div className="page-wrapper">
+        <Confetti active={false} />
         <PageHeader />
         <div className="card" style={{ textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic' }}>
           Loading season data…
@@ -139,6 +142,7 @@ function App() {
   if (error) {
     return (
       <div className="page-wrapper">
+        <Confetti active={false} />
         <PageHeader />
         <div className="card" style={{ textAlign: 'center', color: '#e57373' }}>
           {error}
@@ -249,8 +253,15 @@ function App() {
 
   /* ---- Render ------------------------------------------------- */
 
+  /*
+    Confetti fires on first session load when the most recent game
+    was a win. games[0] is the newest game (ordered desc by date).
+  */
+  const isLastGameWin = games.length > 0 && games[0].team_score > games[0].opponent_score
+
   return (
     <div className="page-wrapper">
+      <Confetti active={isLastGameWin} />
       <PageHeader />
 
       <SeasonSummary record={record} players={seasonPlayers} />
@@ -272,15 +283,26 @@ function App() {
    This is an example of a "presentational" component — no props,
    no state, just markup.
 ================================================================ */
+/*
+  PageHeader uses PixelPlayers to flank the title text with two
+  animated pixel-art soccer players. Each instance renders one
+  canvas and runs its own animation loop independently.
+*/
 function PageHeader() {
   return (
     <header>
       <div className="header-inner">
+        {/* Left player — faces right (toward the title) */}
+        <PixelPlayers />
+
         <div className="header-center">
           <h1 className="team-name">Ninjas</h1>
           <p className="season-label">Spring 2026 Season</p>
           <p className="district-label">Lindbergh School District · Girls 1st Grade</p>
         </div>
+
+        {/* Right player — mirrored so it faces left (toward the title) */}
+        <PixelPlayers mirrored />
       </div>
     </header>
   )
