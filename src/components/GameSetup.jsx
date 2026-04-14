@@ -8,13 +8,14 @@
 
   Props:
     db             — the Supabase client from App.jsx
+    teamId         — the id of the team this game belongs to (from the URL slug)
     onGameCreated  — callback(newGame) called after a successful insert
     onCancel       — callback() called when the user clicks Cancel
 */
 
 import { useState } from 'react'
 
-export default function GameSetup({ db, onGameCreated, onCancel }) {
+export default function GameSetup({ db, teamId, onGameCreated, onCancel }) {
 
   const [date,       setDate]       = useState('')
   const [opponent,   setOpponent]   = useState('')
@@ -34,9 +35,12 @@ export default function GameSetup({ db, onGameCreated, onCancel }) {
     setSubmitting(true)
     setError(null)
 
+    // team_id is REQUIRED by the schema (NOT NULL). Including it scopes
+    // the new game to the correct team so it shows up in the right
+    // dashboard and stays isolated from the other team's data.
     const { data, error: insertError } = await db
       .from('games')
-      .insert({ date, opponent, team_score: 0, opponent_score: 0 })
+      .insert({ date, opponent, team_score: 0, opponent_score: 0, team_id: teamId })
       .select()
       .single()
 

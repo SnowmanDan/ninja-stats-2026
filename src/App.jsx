@@ -1,17 +1,19 @@
 /*
-  App.jsx — root component with live Supabase data.
-  ==================================================
-  This file does three things:
-    1. Fetches raw data from Supabase (players, games, game_stats)
-    2. Transforms that raw data into the shapes each component expects
-    3. Renders the page, passing the transformed data down as props
+  App.jsx — root component with live Supabase data, scoped by team.
+  ==================================================================
+  This file does four things:
+    1. Reads the team slug from the URL (e.g. "ninjas" from /ninjas)
+    2. Looks up the team's id in the `teams` table
+    3. Fetches that team's players, games, and game_stats from Supabase
+    4. Transforms the raw data into the shapes each component expects
 
-  The components (SeasonSummary, GameHistory, etc.) are unchanged —
-  they still just accept props and render them. All the data logic
-  lives here in one place, which makes it easy to find and change.
+  The team scoping is what makes this multi-team. Every Supabase query
+  filters by team_id so the Ninjas and Inter Milan see only their own
+  data, even though they share the same database.
 */
 
 import { useState, useEffect } from 'react'
+import { useParams } from 'react-router-dom'
 import { createClient } from '@supabase/supabase-js'
 
 import './index.css'
@@ -25,6 +27,7 @@ import PixelPlayers  from './components/PixelPlayers'
 import Roster        from './components/Roster'
 import SeasonSummary from './components/SeasonSummary'
 import StatsTable    from './components/StatsTable'
+import TeamSwitcher  from './components/TeamSwitcher'
 
 /* ================================================================
    SUPABASE CLIENT
@@ -50,16 +53,24 @@ const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 function App() {
 
-  /* ---- State -------------------------------------------------- */
+  /* ---- Routing -------------------------------------------------- */
 
   /*
-    useState gives a component "memory" — a value that persists between
-    renders and triggers a re-render when it changes.
-
-    Pattern: const [value, setValue] = useState(initialValue)
-      value    → current value
-      setValue → function to update it (React re-renders when called)
+    useParams reads the dynamic segments from the URL pattern
+    defined in main.jsx (path="/:teamSlug/*"). For /ninjas it
+    returns { teamSlug: "ninjas" }.
   */
+  const { teamSlug } = useParams()
+
+  /* ---- State -------------------------------------------------- */
+
+  // List of all teams in the database (used by the TeamSwitcher
+  // dropdown and to look up the current team's id from its slug).
+  const [teams, setTeams] = useState([])
+
+  // The team object matching the current URL slug. Holds id, name,
+  // slug, season. Null until teams have loaded.
+  const [currentTeam, setCurrentTeam] = useState(null)
 
   // Are we still waiting for the database responses?
   const [loading, setLoading] = useState(true)
@@ -67,8 +78,8 @@ function App() {
   // If a fetch fails, store the error message here to show to the user.
   const [error, setError] = useState(null)
 
-  // Raw rows from each Supabase table — stored separately so the
-  // transformation logic below can combine them in different ways.
+  // Raw rows for the CURRENT team only — these are re-fetched
+  // every time currentTeam changes.
   const [players,  setPlayers]  = useState([])
   const [games,    setGames]    = useState([])
   const [allStats, setAllStats] = useState([])
@@ -79,70 +90,146 @@ function App() {
       'setup'     — GameSetup form to create a new game
       'logger'    — GameLogger UI for the active game
 
-    activeGame holds the Supabase row for the game being logged.
-
-    refreshKey increments when the user returns to the dashboard so
-    useEffect re-runs the data fetch and picks up the new game.
+    These views remain state-based (not URL-based) for now to keep
+    the routing simple. A future refactor can promote them to real
+    routes (e.g. /ninjas/setup, /ninjas/logger/:gameId).
   */
   const [view,       setView]       = useState('dashboard')
   const [activeGame, setActiveGame] = useState(null)
   const [refreshKey, setRefreshKey] = useState(0)
 
-  /* ---- Data fetching ------------------------------------------ */
+  /* ---- Data fetching: teams (runs once on mount) ---------------- */
 
   /*
-    useEffect runs a side effect after the component renders.
-    The empty array [] as the second argument means "run this only
-    once, when the component first mounts" — equivalent to
-    componentDidMount in older React class components.
-
-    We fetch all three tables in parallel with Promise.all so the
-    page doesn't wait for one query before starting the next.
+    Fetch the full list of teams a single time when the app mounts.
+    Teams change rarely so we don't bother re-fetching on every
+    navigation. The TeamSwitcher uses this list, and we use it to
+    look up the current team's id from its slug.
   */
   useEffect(() => {
-    async function fetchAll() {
-      const [playersRes, gamesRes, statsRes] = await Promise.all([
+    async function fetchTeams() {
+      const { data, error: teamsError } = await db
+        .from('teams')
+        .select('id, name, slug, season')
+        .order('id')
 
-        // All players, sorted by jersey number
+      if (teamsError) {
+        console.error('Supabase teams error:', teamsError)
+        setError('Could not load teams. Check the browser console for details.')
+        setLoading(false)
+        return
+      }
+
+      setTeams(data)
+    }
+
+    fetchTeams()
+  }, [])
+
+  /* ---- Resolve the URL slug to a team object -------------------- */
+
+  /*
+    Whenever the teams list or the URL slug changes, look up the
+    matching team. If the slug doesn't match any team, show an error
+    so the user knows the URL is bad rather than seeing a blank page.
+  */
+  useEffect(() => {
+    if (teams.length === 0) return  // teams not loaded yet
+
+    const match = teams.find((t) => t.slug === teamSlug)
+    if (!match) {
+      setError(`No team found for "${teamSlug}".`)
+      setLoading(false)
+      return
+    }
+
+    setCurrentTeam(match)
+    setError(null)
+
+    // Switching teams should reset to the dashboard view so the user
+    // doesn't end up logging stats for the wrong team.
+    setView('dashboard')
+    setActiveGame(null)
+  }, [teams, teamSlug])
+
+  /* ---- Data fetching: team-scoped data -------------------------- */
+
+  /*
+    Fetch players, games, and stats for the current team.
+    Re-runs whenever:
+      - currentTeam changes (user switched teams)
+      - refreshKey increments (returning from the logger after edits)
+
+    All three queries filter by team_id where the column exists:
+      - players.team_id  → only this team's roster
+      - games.team_id    → only this team's games
+      - game_stats has no team_id (it's reachable through game_id and
+        player_id), so we use an inner-join filter via .in() on the
+        game ids we just fetched.
+  */
+  useEffect(() => {
+    if (!currentTeam) return
+
+    async function fetchTeamData() {
+      setLoading(true)
+
+      // Players and games can be fetched in parallel — both filter
+      // directly on team_id.
+      const [playersRes, gamesRes] = await Promise.all([
         db.from('players')
           .select('id, name, number')
+          .eq('team_id', currentTeam.id)
           .order('number'),
 
-        // All games, newest first (games[0] = most recent)
         db.from('games')
           .select('id, date, opponent, team_score, opponent_score')
+          .eq('team_id', currentTeam.id)
           .order('date', { ascending: false }),
-
-        // All game stats across every game
-        db.from('game_stats')
-          .select('game_id, player_id, goals, assists, minutes_in_goal, goals_allowed'),
-
       ])
 
-      // If any query failed, surface the first error and stop
-      const err = playersRes.error || gamesRes.error || statsRes.error
-      if (err) {
-        console.error('Supabase error:', err)
+      const firstErr = playersRes.error || gamesRes.error
+      if (firstErr) {
+        console.error('Supabase error:', firstErr)
         setError('Could not load data. Check the browser console for details.')
         setLoading(false)
         return
       }
 
+      // Now fetch stats for ONLY this team's games. We filter
+      // game_stats by the game ids we just received, which keeps
+      // the data team-scoped without needing a team_id column on
+      // game_stats itself.
+      const gameIds = gamesRes.data.map((g) => g.id)
+      let statsData = []
+      if (gameIds.length > 0) {
+        const statsRes = await db
+          .from('game_stats')
+          .select('game_id, player_id, goals, assists, minutes_in_goal, goals_allowed')
+          .in('game_id', gameIds)
+
+        if (statsRes.error) {
+          console.error('Supabase stats error:', statsRes.error)
+          setError('Could not load stats. Check the browser console for details.')
+          setLoading(false)
+          return
+        }
+        statsData = statsRes.data
+      }
+
       setPlayers(playersRes.data)
       setGames(gamesRes.data)
-      setAllStats(statsRes.data)
+      setAllStats(statsData)
       setLoading(false)
     }
 
-    fetchAll()
-  }, [refreshKey]) // re-runs whenever refreshKey changes (e.g. after returning from logger)
+    fetchTeamData()
+  }, [currentTeam, refreshKey])
 
   /* ---- View callbacks ----------------------------------------- */
 
   /*
     Called by GameSetup after it successfully inserts a game row.
     We store the new game and switch to the logger view.
-    No refetch needed yet — the dashboard isn't visible.
   */
   function handleGameCreated(newGame) {
     setActiveGame(newGame)
@@ -151,8 +238,8 @@ function App() {
 
   /*
     Called by GameLogger's "Back to Dashboard" button.
-    Incrementing refreshKey causes useEffect to re-run the data
-    fetch so the dashboard shows the new game right away.
+    Incrementing refreshKey causes the team-data useEffect to re-run
+    so the dashboard shows the new game right away.
   */
   function handleBackToDashboard() {
     setView('dashboard')
@@ -163,14 +250,16 @@ function App() {
 
   /*
     Render setup/logger immediately — they don't need the fetched
-    data, so we don't wait for loading to finish.
+    data, so we don't wait for loading to finish. They DO need the
+    team id, so we pass currentTeam.id down to GameSetup.
   */
   if (view === 'setup') {
     return (
       <div className="page-wrapper">
-        <PageHeader />
+        <PageHeader team={currentTeam} teams={teams} />
         <GameSetup
           db={db}
+          teamId={currentTeam.id}
           onGameCreated={handleGameCreated}
           onCancel={() => setView('dashboard')}
         />
@@ -181,7 +270,7 @@ function App() {
   if (view === 'logger') {
     return (
       <div className="page-wrapper">
-        <PageHeader />
+        <PageHeader team={currentTeam} teams={teams} />
         <GameLogger game={activeGame} db={db} players={players} onBack={handleBackToDashboard} />
       </div>
     )
@@ -189,16 +278,11 @@ function App() {
 
   /* ---- Loading & error states --------------------------------- */
 
-  /*
-    Early returns — if we're not ready to show data yet, render a
-    simple message instead of the full page. The header always shows
-    so the page doesn't look completely blank.
-  */
   if (loading) {
     return (
       <div className="page-wrapper">
         <Confetti active={false} />
-        <PageHeader />
+        <PageHeader team={currentTeam} teams={teams} />
         <div className="card" style={{ textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic' }}>
           Loading season data…
         </div>
@@ -210,7 +294,7 @@ function App() {
     return (
       <div className="page-wrapper">
         <Confetti active={false} />
-        <PageHeader />
+        <PageHeader team={currentTeam} teams={teams} />
         <div className="card" style={{ textAlign: 'center', color: '#e57373' }}>
           {error}
         </div>
@@ -219,15 +303,6 @@ function App() {
   }
 
   /* ---- Data transformation ------------------------------------ */
-
-  /*
-    Everything below runs only after data has loaded (the early returns
-    above prevent reaching this point while loading === true).
-
-    We transform the raw Supabase rows into the exact shapes that each
-    component's props expect. The DB uses snake_case column names
-    (team_score, opponent_score) so we convert to camelCase here.
-  */
 
   // -- Season record (W/L/T + goals for/against) --
   let wins = 0, losses = 0, ties = 0, goalsFor = 0, goalsAgainst = 0
@@ -241,7 +316,6 @@ function App() {
   const record = { wins, losses, ties, goalsFor, goalsAgainst }
 
   // -- Player lookup map: id → { name, number, goals, assists } --
-  // Built once and reused by both the season totals and per-game stats.
   const playerMap = {}
   players.forEach((p) => {
     playerMap[p.id] = { name: p.name, number: p.number, goals: 0, assists: 0 }
@@ -274,7 +348,7 @@ function App() {
   }))
 
   // -- Per-game stats for the most recent game (games[0]) --
-  const lastGame = games[0]  // already newest-first from the query
+  const lastGame = games[0]
   const lastGameStats = lastGame
     ? allStats
         .filter((s) => s.game_id === lastGame.id)
@@ -303,7 +377,7 @@ function App() {
   const goalieSeasonTotals = Object.values(goalieMap)
     .sort((a, b) => b.minutes - a.minutes)
 
-  // -- Goalie by game: one entry per game that had goalie data --
+  // -- Goalie by game --
   const goalieByGame = games
     .map((g) => {
       const goalies = allStats
@@ -316,22 +390,17 @@ function App() {
 
       return { date: g.date, opponent: g.opponent, goalies }
     })
-    .filter((g) => g.goalies.length > 0) // skip games with no goalie data
+    .filter((g) => g.goalies.length > 0)
 
   /* ---- Render ------------------------------------------------- */
 
-  /*
-    Confetti fires on first session load when the most recent game
-    was a win. games[0] is the newest game (ordered desc by date).
-  */
   const isLastGameWin = games.length > 0 && games[0].team_score > games[0].opponent_score
 
   return (
     <div className="page-wrapper">
       <Confetti active={isLastGameWin} />
-      <PageHeader />
+      <PageHeader team={currentTeam} teams={teams} />
 
-      {/* New Game button — prominent CTA at the top of the dashboard */}
       <div className="new-game-bar">
         <button className="btn btn-primary" onClick={() => setView('setup')}>
           + New Game
@@ -344,7 +413,7 @@ function App() {
       <Roster        players={players} />
       <GoalieStats   seasonTotals={goalieSeasonTotals} byGame={goalieByGame} />
 
-      <footer>⚽ Go Ninjas! ⚽</footer>
+      <footer>⚽ Go {currentTeam.name}! ⚽</footer>
     </div>
   )
 }
@@ -352,32 +421,36 @@ function App() {
 /* ================================================================
    PAGE HEADER
    ----------------------------------------------------------------
-   Extracted into its own small component so the loading and error
-   states above can render the header without duplicating the JSX.
-   This is an example of a "presentational" component — no props,
-   no state, just markup.
+   Now team-aware: shows the current team's name and season, and
+   includes the TeamSwitcher so the user can jump to a different
+   team without typing a URL.
+
+   Props:
+     team  — the current team object ({ id, name, slug, season })
+     teams — all teams (passed through to TeamSwitcher)
 ================================================================ */
-/*
-  PageHeader uses PixelPlayers to flank the title text with two
-  animated pixel-art soccer players. Each instance renders one
-  canvas and runs its own animation loop independently.
-*/
-function PageHeader() {
+function PageHeader({ team, teams }) {
+  // Defensive: during the very first render before teams load,
+  // team is null. Show a placeholder so the layout doesn't jump.
+  const teamName  = team ? team.name   : '…'
+  const season    = team ? team.season : ''
+
   return (
     <header>
       <div className="header-inner">
-        {/* Left player — faces right (toward the title) */}
         <PixelPlayers />
 
         <div className="header-center">
-          <h1 className="team-name">Ninjas</h1>
-          <p className="season-label">Spring 2026 Season</p>
-          <p className="district-label">Lindbergh School District · Girls 1st Grade</p>
+          <h1 className="team-name">{teamName}</h1>
+          {season && <p className="season-label">{season} Season</p>}
         </div>
 
-        {/* Right player — mirrored so it faces left (toward the title) */}
         <PixelPlayers mirrored />
       </div>
+
+      {/* Team switcher sits below the title so it doesn't crowd the
+          pixel players. Hidden when there's only one team. */}
+      <TeamSwitcher teams={teams} currentSlug={team ? team.slug : ''} />
     </header>
   )
 }

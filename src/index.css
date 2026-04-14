@@ -794,6 +794,42 @@ tbody tr:hover {
   line-height: 1.5;
 }
 
+/* ===== 20. TEAM SWITCHER =======================================
+   Small dropdown in the page header for jumping between teams.
+   Sits below the title row so it doesn't crowd the pixel players.
+================================================================= */
+.team-switcher {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 0.9rem;
+}
+
+.team-switcher-label {
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.team-switcher-select {
+  padding: 6px 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border-radius: 6px;
+  border: 1px solid var(--text-muted);
+  background: white;
+  cursor: pointer;
+  min-height: 36px;
+}
+
+.team-switcher-select:focus {
+  outline: 2px solid var(--accent, #2563eb);
+  outline-offset: 2px;
+}
+
 /* ===== 16. FOOTER =============================================== */
 footer {
   text-align: center;
