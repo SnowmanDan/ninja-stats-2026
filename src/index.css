@@ -876,6 +876,114 @@ tbody tr:hover {
   outline-offset: 2px;
 }
 
+/* ===== 23. ROSTER EDITOR ========================================
+   Batch editor for adding and updating players.
+   Two-column row layout: wide name field + narrow number field.
+================================================================= */
+
+/* Header row: title on the left, Save button on the right */
+.re-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* Column label bar above the input rows */
+.re-col-labels {
+  display: flex;
+  gap: 8px;
+  padding: 0 2px 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.re-col-name   { flex: 3 1 0; }
+.re-col-number { flex: 1 1 0; }
+
+/* Container for all editable rows */
+.re-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+/* One editable row: name input + number input side by side */
+.re-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  position: relative;    /* anchor for the duplicate error label */
+}
+
+/*
+  Shrink the padding on these inputs vs. the full-width form-input
+  so two of them can sit comfortably side-by-side on a phone.
+*/
+.re-name-input,
+.re-number-input {
+  padding: 10px 10px;
+  font-size: 0.95rem;
+}
+
+.re-name-input   { flex: 3 1 0; }
+.re-number-input { flex: 1 1 0; }
+
+/* Hide the browser's number-input spinner arrows — they waste space */
+.re-number-input::-webkit-inner-spin-button,
+.re-number-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+.re-number-input { -moz-appearance: textfield; }
+
+/* Duplicate-number error state */
+.re-row-error .re-name-input,
+.re-row-error .re-number-input {
+  border-color: #e57373;
+}
+
+.re-dup-msg {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 2px);
+  font-size: 0.72rem;
+  color: #e57373;
+  white-space: nowrap;
+  pointer-events: none;  /* don't block clicks on the row below */
+}
+
+/* Add Row button — sits below the list, left-aligned to match the rows */
+.re-add-btn {
+  width: 100%;
+  margin-top: 4px;
+  font-size: 0.85rem;
+}
+
+/* Subtle "Manage Roster" link below the Roster card */
+.manage-roster-link {
+  display: block;
+  text-align: center;
+  margin-top: -8px;      /* tuck it up toward the card above */
+  margin-bottom: 16px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 8px;          /* generous tap target even though it looks small */
+}
+
+.manage-roster-link:hover {
+  color: var(--text-primary);
+}
+
 /* ===== 22. GAME HISTORY — SWIPE LIST ============================
    Replaces the old <table> layout. Each row is a flex container
    that can slide left (translateX) to reveal a Delete button.

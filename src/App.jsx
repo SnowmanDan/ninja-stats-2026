@@ -25,6 +25,7 @@ import GameSetup     from './components/GameSetup'
 import GoalieStats   from './components/GoalieStats'
 import PixelPlayers  from './components/PixelPlayers'
 import Roster        from './components/Roster'
+import RosterEditor  from './components/RosterEditor'
 import SeasonSummary from './components/SeasonSummary'
 import StatsTable    from './components/StatsTable'
 import TeamSwitcher  from './components/TeamSwitcher'
@@ -274,6 +275,20 @@ function App() {
     )
   }
 
+  if (view === 'roster-editor') {
+    return (
+      <div className="page-wrapper">
+        <PageHeader team={currentTeam} teams={teams} />
+        <RosterEditor
+          players={players}
+          db={db}
+          teamId={currentTeam.id}
+          onBack={handleBackToDashboard}
+        />
+      </div>
+    )
+  }
+
   /* ---- Loading & error states --------------------------------- */
 
   if (loading) {
@@ -410,6 +425,9 @@ function App() {
       <GameHistory   games={gameHistory} db={db} onDelete={(id) => setGames((prev) => prev.filter((g) => g.id !== id))} />
       {lastGame && <StatsTable game={{ date: lastGame.date, opponent: lastGame.opponent }} stats={lastGameStats} />}
       <Roster        players={players} />
+      <button className="manage-roster-link" onClick={() => setView('roster-editor')}>
+        Manage Roster
+      </button>
       <GoalieStats   seasonTotals={goalieSeasonTotals} byGame={goalieByGame} />
 
       <footer>⚽ Go {currentTeam.name}! ⚽</footer>

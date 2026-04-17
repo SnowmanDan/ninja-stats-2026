@@ -1,58 +1,37 @@
 /*
   GameSetup.jsx
   -------------
-  Form to create a new game. Collects date + opponent, then inserts
-  a row into the Supabase `games` table with scores starting at 0.
-  Calls onGameCreated(newGameRow) on success so the parent can
-  switch to the logger view for that game.
+  Form that collects the date and opponent for a new game.
+  No Supabase write happens here — the game row is only inserted
+  into the database when the coach taps "Save Game" at the end.
+  This means Cancel is a free local reset with nothing to clean up.
 
   Props:
-    db             — the Supabase client from App.jsx
-    teamId         — the id of the team this game belongs to (from the URL slug)
-    onGameCreated  — callback(newGame) called after a successful insert
+    onGameCreated  — callback({ date, opponent }) called on submit
     onCancel       — callback() called when the user clicks Cancel
 */
 
 import { useState } from 'react'
 
-export default function GameSetup({ db, teamId, onGameCreated, onCancel }) {
+export default function GameSetup({ onGameCreated, onCancel }) {
 
-  const [date,       setDate]       = useState('')
-  const [opponent,   setOpponent]   = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  const [error,      setError]      = useState(null)
+  const [date,     setDate]     = useState(() => {
+    const d = new Date()
+    const yyyy = d.getFullYear()
+    const mm   = String(d.getMonth() + 1).padStart(2, '0')
+    const dd   = String(d.getDate()).padStart(2, '0')
+    return `${yyyy}-${mm}-${dd}`   /* YYYY-MM-DD — the only format <input type="date"> accepts */
+  })
+  const [opponent, setOpponent] = useState('')
 
   /*
-    handleSubmit — called when the form is submitted.
-    1. Prevents the default browser page reload (e.preventDefault).
-    2. Inserts a new row into `games` with scores set to 0.
-    3. .select().single() tells Supabase to return the newly created row
-       (with its auto-generated id, timestamps, etc.).
-    4. Hands the new row to the parent via onGameCreated.
+    handleSubmit — validates the form and hands the draft game data
+    to the parent. No network call; the parent stores it in state and
+    switches to the GameLogger view.
   */
-  async function handleSubmit(e) {
+  function handleSubmit(e) {
     e.preventDefault()
-    setSubmitting(true)
-    setError(null)
-
-    // team_id is REQUIRED by the schema (NOT NULL). Including it scopes
-    // the new game to the correct team so it shows up in the right
-    // dashboard and stays isolated from the other team's data.
-    const { data, error: insertError } = await db
-      .from('games')
-      .insert({ date, opponent, team_score: 0, opponent_score: 0, team_id: teamId })
-      .select()
-      .single()
-
-    if (insertError) {
-      console.error('Supabase insert error:', insertError)
-      setError('Could not create game. Check the browser console for details.')
-      setSubmitting(false)
-      return
-    }
-
-    /* Pass the full row (including the new id) up to App */
-    onGameCreated(data)
+    onGameCreated({ date, opponent })
   }
 
   return (
@@ -90,22 +69,11 @@ export default function GameSetup({ db, teamId, onGameCreated, onCancel }) {
           />
         </div>
 
-        {/* Show Supabase errors inline so the user knows what went wrong */}
-        {error && <p className="form-error">{error}</p>}
-
         <div className="form-actions">
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={submitting}
-          >
-            {submitting ? 'Creating…' : 'Start Game'}
+          <button type="submit" className="btn btn-primary">
+            Start Game
           </button>
-          <button
-            type="button"
-            className="btn btn-ghost"
-            onClick={onCancel}
-          >
+          <button type="button" className="btn btn-ghost" onClick={onCancel}>
             Cancel
           </button>
         </div>
