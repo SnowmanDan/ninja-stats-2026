@@ -228,8 +228,8 @@ function App() {
   /* ---- View callbacks ----------------------------------------- */
 
   /*
-    Called by GameSetup after it successfully inserts a game row.
-    We store the new game and switch to the logger view.
+    Called by GameSetup with the draft { date, opponent }.
+    No Supabase write yet — the INSERT fires only when Save Game is tapped.
   */
   function handleGameCreated(newGame) {
     setActiveGame(newGame)
@@ -250,16 +250,14 @@ function App() {
 
   /*
     Render setup/logger immediately — they don't need the fetched
-    data, so we don't wait for loading to finish. They DO need the
-    team id, so we pass currentTeam.id down to GameSetup.
+    data, so we don't wait for loading to finish. GameLogger gets
+    teamId so it can scope the games INSERT to the right team.
   */
   if (view === 'setup') {
     return (
       <div className="page-wrapper">
         <PageHeader team={currentTeam} teams={teams} />
         <GameSetup
-          db={db}
-          teamId={currentTeam.id}
           onGameCreated={handleGameCreated}
           onCancel={() => setView('dashboard')}
         />
@@ -271,7 +269,7 @@ function App() {
     return (
       <div className="page-wrapper">
         <PageHeader team={currentTeam} teams={teams} />
-        <GameLogger game={activeGame} db={db} players={players} onBack={handleBackToDashboard} />
+        <GameLogger game={activeGame} db={db} players={players} teamId={currentTeam.id} onBack={handleBackToDashboard} />
       </div>
     )
   }
@@ -341,6 +339,7 @@ function App() {
 
   // -- Game history: rename snake_case keys to camelCase --
   const gameHistory = games.map((g) => ({
+    id:            g.id,
     date:          g.date,
     opponent:      g.opponent,
     teamScore:     g.team_score,
@@ -408,7 +407,7 @@ function App() {
       </div>
 
       <SeasonSummary record={record} players={seasonPlayers} />
-      <GameHistory   games={gameHistory} />
+      <GameHistory   games={gameHistory} db={db} />
       {lastGame && <StatsTable game={{ date: lastGame.date, opponent: lastGame.opponent }} stats={lastGameStats} />}
       <Roster        players={players} />
       <GoalieStats   seasonTotals={goalieSeasonTotals} byGame={goalieByGame} />

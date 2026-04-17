@@ -765,7 +765,53 @@ tbody tr:hover {
   color: var(--white);
 }
 
-/* ===== 19. GAME LOGGER — CONFIRM SCREEN =========================
+/* ===== 19. GAME LOGGER — CANCEL GAME ===========================
+   "Cancel Game" sits below "End Game" in the end bar.
+   Styled as a subtle text-only link so it's clearly secondary —
+   you have to mean it to tap it. The confirmation card uses the
+   existing .card and .form-actions patterns.
+================================================================= */
+.btn-cancel-game {
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s ease;
+}
+
+.btn-cancel-game:hover {
+  color: var(--red);
+}
+
+.cancel-confirm-card {
+  /* Red top stripe is inherited from .card; add a subtle red border
+     on the sides too so it reads as a warning, not just another section */
+  border: 1px solid var(--red);
+  border-top: 3px solid var(--red);
+}
+
+.cancel-confirm-question {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.cancel-confirm-detail {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+/* ===== 21. GAME LOGGER — CONFIRM SCREEN =========================
    Summary of the game before writing to Supabase.
 ================================================================= */
 .confirm-summary {
@@ -828,6 +874,134 @@ tbody tr:hover {
 .team-switcher-select:focus {
   outline: 2px solid var(--accent, #2563eb);
   outline-offset: 2px;
+}
+
+/* ===== 22. GAME HISTORY — SWIPE LIST ============================
+   Replaces the old <table> layout. Each row is a flex container
+   that can slide left (translateX) to reveal a Delete button.
+   The outer <li> is the clipping boundary; the inner .gh-row slides.
+================================================================= */
+
+/* Column-header bar — mimics the old <thead> visually */
+.gh-header {
+  display: flex;
+  gap: 8px;
+  padding: 6px 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+
+/* The <ul> that holds all game rows */
+.gh-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+  Each <li> is a clipping boundary.
+  overflow: hidden keeps the sliding row and delete button contained.
+  position: relative so the absolute-positioned delete button works.
+*/
+.gh-swipe-container {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-card);
+}
+
+/* Alternate row tint (zebra stripe) */
+.gh-swipe-container.gh-alt {
+  background: var(--bg-card-alt);
+}
+
+/*
+  The sliding row. We apply will-change: transform so the browser
+  composites this layer separately — smoother swipe animation.
+  transform is set inline via ref during the swipe gesture.
+*/
+.gh-row {
+  position: relative;
+  z-index: 1;              /* sit above the absolute-positioned delete button */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: inherit;     /* inherits zebra stripe from parent */
+  will-change: transform;
+  /* transition is toggled inline (off during drag, on during snap) */
+}
+
+/*
+  Delete button — positioned behind the row on the right edge.
+  It's revealed when the row slides left by OPEN_OFFSET (80px).
+  Width matches OPEN_OFFSET so it fills the gap exactly.
+*/
+.gh-delete-btn {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 80px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+}
+
+.gh-delete-btn:active {
+  background: #dc2626;
+}
+
+/* Shared column widths — header and rows use the same flex values */
+.gh-col-date     { flex: 2 1 0; font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; }
+.gh-col-opponent { flex: 2 1 0; font-size: 0.85rem; font-weight: 600; }
+.gh-col-score    { flex: 1 1 0; font-size: 0.85rem; text-align: center; }
+.gh-col-result   { flex: 1 1 0; text-align: right; }
+
+/* ── Delete confirmation modal ─────────────────────────────────── */
+
+/* Full-screen semi-transparent overlay — tap to dismiss */
+.gh-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 16px;
+}
+
+/* The modal card */
+.gh-confirm-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  width: 100%;
+  max-width: 320px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+.gh-confirm-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: var(--text-primary);
+}
+
+.gh-confirm-detail {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0 0 20px;
 }
 
 /* ===== 16. FOOTER =============================================== */
