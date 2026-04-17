@@ -99,6 +99,9 @@ function App() {
   const [activeGame, setActiveGame] = useState(null)
   const [refreshKey, setRefreshKey] = useState(0)
 
+  // Saved draft from a previous logger session (crash / accidental refresh)
+  const [savedDraft, setSavedDraft] = useState(null)
+
   /* ---- Data fetching: teams (runs once on mount) ---------------- */
 
   /*
@@ -151,6 +154,14 @@ function App() {
     // doesn't end up logging stats for the wrong team.
     setView('dashboard')
     setActiveGame(null)
+
+    // Check for an unsaved game draft left by a crash or accidental refresh
+    try {
+      const raw = localStorage.getItem(`ninja-stats-draft-${match.id}`)
+      setSavedDraft(raw ? JSON.parse(raw) : null)
+    } catch {
+      setSavedDraft(null)
+    }
   }, [teams, teamSlug])
 
   /* ---- Data fetching: team-scoped data -------------------------- */
@@ -233,6 +244,9 @@ function App() {
     No Supabase write yet — the INSERT fires only when Save Game is tapped.
   */
   function handleGameCreated(newGame) {
+    // Clear any saved draft so the logger starts fresh (not a resume)
+    localStorage.removeItem(`ninja-stats-draft-${currentTeam.id}`)
+    setSavedDraft(null)
     setActiveGame(newGame)
     setView('logger')
   }
@@ -414,6 +428,35 @@ function App() {
     <div className="page-wrapper">
       <Confetti active={isLastGameWin} />
       <PageHeader team={currentTeam} teams={teams} />
+
+      {savedDraft && (
+        <div className="card draft-recovery-card">
+          <p className="draft-recovery-msg">
+            Unsaved game vs. <strong>{savedDraft.game.opponent}</strong> — resume where you left off?
+          </p>
+          <div className="form-actions">
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                setActiveGame(savedDraft.game)
+                setView('logger')
+                setSavedDraft(null)
+              }}
+            >
+              Resume
+            </button>
+            <button
+              className="btn btn-ghost"
+              onClick={() => {
+                localStorage.removeItem(`ninja-stats-draft-${currentTeam.id}`)
+                setSavedDraft(null)
+              }}
+            >
+              Discard
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="new-game-bar">
         {players.length === 0 && (

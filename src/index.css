@@ -408,6 +408,29 @@ tbody tr:hover {
   color: var(--red);
 }
 
+/* ===== 11b. DRAFT RECOVERY CARD =================================
+   Shown on the dashboard when a crash/refresh left an unsaved game.
+================================================================= */
+.draft-recovery-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  border-left: 3px solid var(--red);
+}
+
+.draft-recovery-msg {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.draft-recovery-msg strong {
+  color: var(--text-primary);
+}
+
 /* ===== 12. NEW GAME BAR =========================================
    Sits between the header and dashboard sections. Full-width on
    mobile so it's easy to tap; auto-width on wider screens.

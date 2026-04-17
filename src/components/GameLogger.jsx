@@ -1,28 +1,46 @@
 /*
   GameLogger.jsx
   --------------
-  Live game logger. All events are held in React state until the
-  user taps "Save Game", at which point we write to Supabase in one
-  batch. Nothing is written mid-game.
+  Live game logger. All events and game data are held in React state
+  until the coach taps "Save Game". Only then is anything written to
+  Supabase — one INSERT for the game row, one INSERT for the stats.
 
-  Flow:
-    'logging' phase — score + player grid + event buttons + event log
-    'confirm' phase — final score + notes textarea + Save / Keep Logging
+  This means Cancel is a free local reset: nothing has been written,
+  so there is nothing to delete or clean up.
+
+  Save flow:
+    1. INSERT into games (date, opponent, final scores, notes, team_id)
+       → Supabase returns the new row including its auto-generated id
+    2. INSERT into game_stats (one row per player who had any events),
+       using the id from step 1
+    3. Call onBack() so App re-fetches and shows the updated dashboard
 
   Props:
-    game    — Supabase games row { id, date, opponent, ... }
+    game    — draft game data { date, opponent } from GameSetup
     db      — Supabase client (used only on save)
     players — array of { id, name, number } from App state
-    onBack  — callback() called after saving (or if user navigates away)
+    teamId  — the current team's id (needed for the games INSERT)
+    onBack  — callback() called after saving or cancelling
 */
 
-import { useState, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 /* The five things a coach can log for a player */
 const EVENT_TYPES = ['Goal', 'Assist', 'Shot on Goal', 'Save', 'Goal Allowed']
 
+/* ---- localStorage draft helpers --------------------------------
+   Key is scoped to the team so a Ninjas draft never bleeds into
+   a different team's logger on the same device.
+----------------------------------------------------------------- */
+function draftKey(teamId)    { return `ninja-stats-draft-${teamId}` }
+function readDraft(teamId)   {
+  try { const r = localStorage.getItem(draftKey(teamId)); return r ? JSON.parse(r) : null }
+  catch { return null }
+}
+function clearDraft(teamId)  { localStorage.removeItem(draftKey(teamId)) }
+
 /*
-  formatDate — "2026-04-12" → "April 12, 2026"
+  formatDate — "2026-04-16" → "April 16, 2026"
   T00:00:00 forces local midnight so US time zones show the right day.
 */
 function formatDate(dateStr) {
@@ -31,28 +49,56 @@ function formatDate(dateStr) {
   })
 }
 
-export default function GameLogger({ game, db, players, onBack }) {
+export default function GameLogger({ game, db, players, teamId, onBack }) {
 
   /* ---- Logging state ------------------------------------------ */
 
   /*
-    events — chronological list of everything logged this game.
+    events, phase, and notes are restored from localStorage on mount
+    so a refresh or crash doesn't lose in-progress work.
     Each entry: { id (unique int), player { id, name, number }, type (string) }
-    We use a ref for the next id so it increments without causing re-renders.
+    nextId starts above the highest saved id to avoid collisions.
   */
-  const [events,         setEvents]         = useState([])
+  const [events,         setEvents]         = useState(() => readDraft(teamId)?.events ?? [])
   const [selectedPlayer, setSelectedPlayer] = useState(null)
-  const nextId = useRef(0)
+  const nextId = useRef((() => {
+    const ids = readDraft(teamId)?.events?.map((e) => e.id) ?? []
+    return ids.length ? Math.max(...ids) + 1 : 0
+  })())
 
   /* ---- Phase / save state ------------------------------------- */
 
   /*
     phase: 'logging' = main game view  |  'confirm' = end-game confirmation
   */
-  const [phase,     setPhase]     = useState('logging')
-  const [notes,     setNotes]     = useState('')
+  const [phase,     setPhase]     = useState(() => readDraft(teamId)?.phase ?? 'logging')
+  const [notes,     setNotes]     = useState(() => readDraft(teamId)?.notes ?? '')
   const [saving,    setSaving]    = useState(false)
   const [saveError, setSaveError] = useState(null)
+
+  /* ---- Draft persistence -------------------------------------- */
+
+  /*
+    Write the current session to localStorage after every change so
+    a crash or refresh can be recovered. The draft is cleared on a
+    successful save or a deliberate cancel — not on every unmount,
+    because an accidental navigation IS what we want to recover from.
+  */
+  useEffect(() => {
+    try {
+      localStorage.setItem(draftKey(teamId), JSON.stringify({ teamId, game, events, notes, phase }))
+    } catch (err) {
+      console.warn('Could not persist game draft:', err)
+    }
+  }, [events, notes, phase])
+
+  /* ---- Cancel state ------------------------------------------- */
+
+  /*
+    No async work needed — cancelling just calls onBack().
+    showCancelConfirm controls the "Are you sure?" prompt.
+  */
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
 
   /* ---- Derived scores ----------------------------------------- */
 
@@ -64,7 +110,7 @@ export default function GameLogger({ game, db, players, onBack }) {
   const ninjasScore   = events.filter((e) => e.type === 'Goal').length
   const opponentScore = events.filter((e) => e.type === 'Goal Allowed').length
 
-  /* ---- Handlers ----------------------------------------------- */
+  /* ---- Event handlers ----------------------------------------- */
 
   function handlePlayerSelect(player) {
     /* Tap the already-selected player to deselect */
@@ -83,13 +129,15 @@ export default function GameLogger({ game, db, players, onBack }) {
   }
 
   /*
-    handleSave — aggregate events → write to Supabase → return to dashboard.
+    handleSave — write everything to Supabase in two sequential steps,
+    then return to the dashboard.
 
-    Steps:
-      1. Build one stats object per player (goals, assists, etc.)
-      2. INSERT those rows into game_stats
-      3. UPDATE the games row with final scores + notes
-      4. Call onBack() so App re-fetches and shows the updated dashboard
+    Step 1: INSERT the game row with final scores and notes.
+            We do this here (not in GameSetup) so a cancelled game
+            never touches the database.
+
+    Step 2: INSERT one game_stats row per player who had any events,
+            using the game id returned by step 1.
   */
   async function handleSave() {
     setSaving(true)
@@ -110,44 +158,56 @@ export default function GameLogger({ game, db, players, onBack }) {
       if (type === 'Goal Allowed') statsByPlayer[player.id].goals_allowed++
     })
 
-    /* Build the rows array (one per player who had any event) */
-    const statsRows = Object.entries(statsByPlayer).map(([player_id, stats]) => ({
-      game_id:   game.id,
-      player_id: Number(player_id),
-      ...stats,
-    }))
+    /* Step 2: INSERT the game row — final scores are known now */
+    const { data: savedGame, error: gameError } = await db
+      .from('games')
+      .insert({
+        date:           game.date,
+        opponent:       game.opponent,
+        team_score:     ninjasScore,
+        opponent_score: opponentScore,
+        notes:          notes.trim() || null,
+        team_id:        teamId,
+      })
+      .select()
+      .single()
 
-    /* Step 2 + 3: run both writes in parallel for speed */
-    const writes = []
-
-    if (statsRows.length > 0) {
-      writes.push(db.from('game_stats').insert(statsRows))
-    }
-
-    writes.push(
-      db.from('games')
-        .update({
-          team_score:     ninjasScore,
-          opponent_score: opponentScore,
-          notes:          notes.trim() || null,
-        })
-        .eq('id', game.id)
-    )
-
-    const results = await Promise.all(writes)
-    const firstErr = results.find((r) => r.error)?.error
-    if (firstErr) {
-      console.error('Supabase save error:', firstErr)
+    if (gameError) {
+      console.error('Supabase game insert error:', gameError)
       setSaveError('Could not save game. Check the browser console for details.')
       setSaving(false)
       return
     }
 
-    /* Success — App.jsx will refetch the dashboard */
+    /* Step 3: INSERT game_stats rows (skip if no events were logged) */
+    const statsRows = Object.entries(statsByPlayer).map(([player_id, stats]) => ({
+      game_id:   savedGame.id, /* id came back from step 2 */
+      player_id: Number(player_id),
+      ...stats,
+    }))
+
+    if (statsRows.length > 0) {
+      const { error: statsError } = await db.from('game_stats').insert(statsRows)
+
+      if (statsError) {
+        console.error('Supabase stats insert error:', statsError)
+        /*
+          The game row was already saved. Stats failed, but don't leave
+          the coach stranded — show a specific message so they know what
+          happened and can check the console.
+        */
+        setSaveError('Game saved but stats could not be written. Check the browser console.')
+        setSaving(false)
+        return
+      }
+    }
+
+    /* Both writes succeeded — clear the draft and return to dashboard */
+    clearDraft(teamId)
     onBack()
   }
 
-  /* ---- Confirm phase ------------------------------------------ */
+  /* ---- Confirm (end-game) phase ------------------------------- */
 
   if (phase === 'confirm') {
     const resultLabel =
@@ -174,7 +234,6 @@ export default function GameLogger({ game, db, players, onBack }) {
         <div className="card">
           <h2 className="section-title">End Game</h2>
 
-          {/* Final score + result badge */}
           <div className="confirm-summary">
             <span className="confirm-score-text">
               Ninjas {ninjasScore} – {opponentScore} {game.opponent}
@@ -186,7 +245,6 @@ export default function GameLogger({ game, db, players, onBack }) {
             {events.length} event{events.length !== 1 ? 's' : ''} logged
           </p>
 
-          {/* Optional notes */}
           <div className="form-group">
             <label className="form-label" htmlFor="game-notes">
               Game Notes (optional)
@@ -255,7 +313,6 @@ export default function GameLogger({ game, db, players, onBack }) {
                 className={`player-btn${selectedPlayer?.id === p.id ? ' selected' : ''}`}
                 onClick={() => handlePlayerSelect(p)}
               >
-                {/* Jersey number on top, first name below */}
                 <span className="player-btn-num">#{p.number}</span>
                 <span className="player-btn-name">{p.name.split(' ')[0]}</span>
               </button>
@@ -288,11 +345,6 @@ export default function GameLogger({ game, db, players, onBack }) {
             Event Log
             <span className="event-log-count">{events.length}</span>
           </h2>
-          {/*
-            Reverse so the most recent event appears at the top —
-            easier to see what you just tapped without scrolling.
-            We spread to avoid mutating the state array.
-          */}
           <ul className="event-log">
             {[...events].reverse().map((e) => (
               <li key={e.id} className="event-log-item">
@@ -316,13 +368,40 @@ export default function GameLogger({ game, db, players, onBack }) {
         </div>
       )}
 
-      {/* ── End game ─────────────────────────────────────────────── */}
+      {/* ── Cancel confirmation ──────────────────────────────────── */}
+      {showCancelConfirm && (
+        <div className="card cancel-confirm-card">
+          <p className="cancel-confirm-question">Cancel this game?</p>
+          <p className="cancel-confirm-detail">
+            No data has been saved yet. All logged events will be discarded.
+          </p>
+          <div className="form-actions">
+            <button className="btn btn-primary" onClick={() => { clearDraft(teamId); onBack() }}>
+              Yes, Cancel Game
+            </button>
+            <button
+              className="btn btn-ghost"
+              onClick={() => setShowCancelConfirm(false)}
+            >
+              No, Keep Playing
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── End game / Cancel bar ────────────────────────────────── */}
       <div className="logger-end-bar">
         <button
           className="btn btn-end-game"
           onClick={() => setPhase('confirm')}
         >
           End Game
+        </button>
+        <button
+          className="btn btn-cancel-game"
+          onClick={() => { setShowCancelConfirm(true); setSelectedPlayer(null) }}
+        >
+          Cancel Game
         </button>
       </div>
 
