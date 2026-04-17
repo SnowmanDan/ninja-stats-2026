@@ -15,6 +15,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { createClient } from '@supabase/supabase-js'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 
 import './index.css'
 
@@ -479,6 +480,7 @@ function App() {
       <GoalieStats   seasonTotals={goalieSeasonTotals} byGame={goalieByGame} />
 
       <footer>⚽ Go {currentTeam.name}! ⚽</footer>
+      <SpeedInsights />
     </div>
   )
 }
