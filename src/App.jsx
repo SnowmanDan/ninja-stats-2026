@@ -407,7 +407,7 @@ function App() {
       </div>
 
       <SeasonSummary record={record} players={seasonPlayers} />
-      <GameHistory   games={gameHistory} db={db} />
+      <GameHistory   games={gameHistory} db={db} onDelete={(id) => setGames((prev) => prev.filter((g) => g.id !== id))} />
       {lastGame && <StatsTable game={{ date: lastGame.date, opponent: lastGame.opponent }} stats={lastGameStats} />}
       <Roster        players={players} />
       <GoalieStats   seasonTotals={goalieSeasonTotals} byGame={goalieByGame} />

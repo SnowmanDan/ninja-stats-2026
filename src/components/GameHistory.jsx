@@ -39,7 +39,7 @@ function formatDate(dateStr) {
   })
 }
 
-export default function GameHistory({ games: gamesProp, db }) {
+export default function GameHistory({ games: gamesProp, db, onDelete }) {
   /*
     localGames — initialized from the prop once at mount.
     We manage it locally so a successful delete removes the row instantly
@@ -186,6 +186,7 @@ export default function GameHistory({ games: gamesProp, db }) {
       ON DELETE CASCADE on game_stats.game_id handles child row cleanup.
     */
     setLocalGames((prev) => prev.filter((g) => g.id !== confirmGame.id))
+    onDelete?.(confirmGame.id)
     setOpenId(null)
     setConfirmGame(null)
     setDeleting(false)
