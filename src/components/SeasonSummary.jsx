@@ -58,12 +58,13 @@ function SeasonSummary({ record, players }) {
             {/* aria-label gives screen readers a real description instead of just the emoji */}
             <th scope="col" className="col-center" aria-label="Goals">⚽ Goals</th>
             <th scope="col" className="col-center" aria-label="Assists">🅰️ Assists</th>
+            <th scope="col" className="col-center" aria-label="Shots on Goal">🎯 Shots</th>
           </tr>
         </thead>
         <tbody>
           {players.length === 0 ? (
             <tr>
-              <td colSpan="4" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px', fontStyle: 'italic' }}>
+              <td colSpan="5" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px', fontStyle: 'italic' }}>
                 No stats recorded yet this season.
               </td>
             </tr>
@@ -82,6 +83,7 @@ function SeasonSummary({ record, players }) {
                 <td>{p.name}</td>
                 <td className="col-center">{p.goals}</td>
                 <td className="col-center">{p.assists}</td>
+                <td className="col-center">{p.shots}</td>
               </tr>
             ))
           )}

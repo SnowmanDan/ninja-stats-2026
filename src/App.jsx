@@ -346,7 +346,7 @@ function App() {
   // -- Player lookup map: id → { name, number, goals, assists } --
   const playerMap = {}
   players.forEach((p) => {
-    playerMap[p.id] = { name: p.name, number: p.number, goals: 0, assists: 0 }
+    playerMap[p.id] = { name: p.name, number: p.number, goals: 0, assists: 0, shots: 0 }
   })
 
   // -- Season totals: accumulate goals + assists across all games --
@@ -354,13 +354,14 @@ function App() {
     if (playerMap[s.player_id]) {
       playerMap[s.player_id].goals   += s.goals
       playerMap[s.player_id].assists += s.assists
+      playerMap[s.player_id].shots   += (s.shots_on_goal || 0)
     }
   })
 
   // Only show players who scored or assisted at least once,
   // sorted: most goals → most assists → lowest jersey number
   const seasonPlayers = Object.values(playerMap)
-    .filter((p) => p.goals > 0 || p.assists > 0)
+    .filter((p) => p.goals > 0 || p.assists > 0 || p.shots > 0)
     .sort((a, b) => {
       if (b.goals   !== a.goals)   return b.goals   - a.goals
       if (b.assists !== a.assists) return b.assists - a.assists
@@ -395,11 +396,12 @@ function App() {
 
     if (!goalieMap[s.player_id]) {
       const p = playerMap[s.player_id] || { name: 'Unknown' }
-      goalieMap[s.player_id] = { name: p.name, gamesInGoal: 0, minutes: 0, goalsAllowed: 0 }
+      goalieMap[s.player_id] = { name: p.name, gamesInGoal: 0, minutes: 0, saves: 0, goalsAllowed: 0 }
     }
 
     goalieMap[s.player_id].gamesInGoal  += 1
     goalieMap[s.player_id].minutes      += s.minutes_in_goal
+    goalieMap[s.player_id].saves        += (s.saves || 0)
     goalieMap[s.player_id].goalsAllowed += (s.goals_allowed || 0)
   })
 
@@ -413,7 +415,7 @@ function App() {
         .filter((s) => s.game_id === g.id && s.minutes_in_goal > 0)
         .map((s) => {
           const p = playerMap[s.player_id] || { name: 'Unknown' }
-          return { name: p.name, minutes: s.minutes_in_goal, goalsAllowed: s.goals_allowed || 0 }
+          return { name: p.name, minutes: s.minutes_in_goal, saves: s.saves || 0, goalsAllowed: s.goals_allowed || 0 }
         })
         .sort((a, b) => b.minutes - a.minutes)
 

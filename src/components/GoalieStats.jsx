@@ -104,13 +104,14 @@ function GoalieStats({ seasonTotals, byGame }) {
                 <th scope="col">Player</th>
                 <th scope="col" className="col-center">Games in Goal</th>
                 <th scope="col" className="col-center">Minutes</th>
+                <th scope="col" className="col-center">Saves</th>
                 <th scope="col" className="col-center">Goals Allowed</th>
               </tr>
             </thead>
             <tbody>
               {seasonTotals.length === 0 ? (
                 <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px', fontStyle: 'italic' }}>
+                  <td colSpan="5" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px', fontStyle: 'italic' }}>
                     No goalie data recorded yet.
                   </td>
                 </tr>
@@ -124,6 +125,7 @@ function GoalieStats({ seasonTotals, byGame }) {
                     <td>{g.name}</td>
                     <td className="col-center">{g.gamesInGoal}</td>
                     <td className="col-center">{g.minutes}</td>
+                    <td className="col-center">{g.saves}</td>
                     <td className="col-center">{g.goalsAllowed}</td>
                   </tr>
                 ))
@@ -149,6 +151,7 @@ function GoalieStats({ seasonTotals, byGame }) {
                     <tr>
                       <th scope="col">Player</th>
                       <th scope="col" className="col-center">Minutes</th>
+                      <th scope="col" className="col-center">Saves</th>
                       <th scope="col" className="col-center">Goals Allowed</th>
                     </tr>
                   </thead>
@@ -157,6 +160,7 @@ function GoalieStats({ seasonTotals, byGame }) {
                       <tr key={g.name}>
                         <td>{g.name}</td>
                         <td className="col-center">{g.minutes}</td>
+                        <td className="col-center">{g.saves}</td>
                         <td className="col-center">{g.goalsAllowed}</td>
                       </tr>
                     ))}
