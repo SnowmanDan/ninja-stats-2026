@@ -416,6 +416,11 @@ function App() {
       <PageHeader team={currentTeam} teams={teams} />
 
       <div className="new-game-bar">
+        {players.length === 0 && (
+          <button className="btn btn-primary" onClick={() => setView('roster-editor')}>
+            + Add Roster
+          </button>
+        )}
         <button className="btn btn-primary" onClick={() => setView('setup')}>
           + New Game
         </button>
