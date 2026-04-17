@@ -197,7 +197,8 @@ function App() {
         db.from('games')
           .select('id, date, opponent, team_score, opponent_score')
           .eq('team_id', currentTeam.id)
-          .order('date', { ascending: false }),
+          .order('date', { ascending: false })
+          .order('id',   { ascending: false }),  /* tiebreak: most recently logged first */
       ])
 
       const firstErr = playersRes.error || gamesRes.error
