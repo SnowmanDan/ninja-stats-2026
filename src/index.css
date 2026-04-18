@@ -177,12 +177,15 @@ header {
 ================================================================= */
 .table-wrap {
   /* block wrapper so Safari computes table width:100% against the content
-     box (not the card border-box). No overflow:hidden — that clips columns. */
+     box (not the card border-box). overflow-x:auto enables horizontal scroll
+     when a table is too wide for the screen (e.g. many stat columns on mobile). */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* smooth momentum scroll on iOS */
 }
 
 table {
   width: 100%;
-  max-width: 100%;   /* prevent table from overflowing its container on narrow screens */
+  min-width: max-content; /* let the table grow naturally; wrapper handles scroll */
   border-collapse: collapse;
   font-size: 0.9rem;
 }
@@ -195,6 +198,7 @@ thead th {
   font-size: 0.75rem;
   letter-spacing: 1px;
   text-transform: uppercase;
+  white-space: nowrap; /* prevent header text from wrapping during horizontal scroll */
 }
 
 /* No border-radius on th cells — the card itself provides rounded corners,

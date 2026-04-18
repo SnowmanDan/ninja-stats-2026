@@ -60,12 +60,14 @@ function SeasonSummary({ record, players }) {
             <th scope="col" className="col-center" aria-label="Goals">⚽ Goals</th>
             <th scope="col" className="col-center" aria-label="Assists">🅰️ Assists</th>
             <th scope="col" className="col-center" aria-label="Shots on Goal">🎯 Shots</th>
+            <th scope="col" className="col-center" aria-label="Tackles">🛡️ Tackles</th>
+            <th scope="col" className="col-center" aria-label="Saves">🧤 Saves</th>
           </tr>
         </thead>
         <tbody>
           {players.length === 0 ? (
             <tr>
-              <td colSpan="5" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px', fontStyle: 'italic' }}>
+              <td colSpan="7" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px', fontStyle: 'italic' }}>
                 No stats recorded yet this season.
               </td>
             </tr>
@@ -85,6 +87,8 @@ function SeasonSummary({ record, players }) {
                 <td className="col-center">{p.goals}</td>
                 <td className="col-center">{p.assists}</td>
                 <td className="col-center">{p.shots}</td>
+                <td className="col-center">{p.tackles}</td>
+                <td className="col-center">{p.saves}</td>
               </tr>
             ))
           )}

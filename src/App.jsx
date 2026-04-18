@@ -218,7 +218,7 @@ function App() {
       if (gameIds.length > 0) {
         const statsRes = await db
           .from('game_stats')
-          .select('game_id, player_id, goals, assists, minutes_in_goal, goals_allowed')
+          .select('game_id, player_id, goals, assists, shots_on_goal, tackles, saves, minutes_in_goal, goals_allowed')
           .in('game_id', gameIds)
 
         if (statsRes.error) {
@@ -253,7 +253,7 @@ function App() {
   async function handleGameEdit(game) {
     const { data: statsData, error } = await db
       .from('game_stats')
-      .select('player_id, goals, assists, shots_on_goal, blocks, saves, goals_allowed')
+      .select('player_id, goals, assists, shots_on_goal, tackles, saves, goals_allowed')
       .eq('game_id', game.id)
 
     if (error) {
@@ -271,7 +271,7 @@ function App() {
       for (let i = 0; i < (stat.goals         || 0); i++) initialEvents.push({ id: eventId++, player, type: 'Goal' })
       for (let i = 0; i < (stat.assists        || 0); i++) initialEvents.push({ id: eventId++, player, type: 'Assist' })
       for (let i = 0; i < (stat.shots_on_goal  || 0); i++) initialEvents.push({ id: eventId++, player, type: 'Shot on Goal' })
-      for (let i = 0; i < (stat.blocks         || 0); i++) initialEvents.push({ id: eventId++, player, type: 'Block' })
+      for (let i = 0; i < (stat.tackles        || 0); i++) initialEvents.push({ id: eventId++, player, type: 'Tackle' })
       for (let i = 0; i < (stat.saves          || 0); i++) initialEvents.push({ id: eventId++, player, type: 'Save' })
       for (let i = 0; i < (stat.goals_allowed  || 0); i++) initialEvents.push({ id: eventId++, player, type: 'Goal Allowed' })
     })
@@ -399,7 +399,7 @@ function App() {
   // -- Player lookup map: id → { name, number, goals, assists } --
   const playerMap = {}
   players.forEach((p) => {
-    playerMap[p.id] = { name: p.name, number: p.number, goals: 0, assists: 0, shots: 0 }
+    playerMap[p.id] = { name: p.name, number: p.number, goals: 0, assists: 0, shots: 0, tackles: 0, saves: 0 }
   })
 
   // -- Season totals: accumulate goals + assists across all games --
@@ -408,13 +408,15 @@ function App() {
       playerMap[s.player_id].goals   += s.goals
       playerMap[s.player_id].assists += s.assists
       playerMap[s.player_id].shots   += (s.shots_on_goal || 0)
+      playerMap[s.player_id].tackles += (s.tackles || 0)
+      playerMap[s.player_id].saves   += (s.saves  || 0)
     }
   })
 
   // Only show players who scored or assisted at least once,
   // sorted: most goals → most assists → lowest jersey number
   const seasonPlayers = Object.values(playerMap)
-    .filter((p) => p.goals > 0 || p.assists > 0 || p.shots > 0)
+    .filter((p) => p.goals > 0 || p.assists > 0 || p.shots > 0 || p.tackles > 0 || p.saves > 0)
     .sort((a, b) => {
       if (b.goals   !== a.goals)   return b.goals   - a.goals
       if (b.assists !== a.assists) return b.assists - a.assists
@@ -438,7 +440,7 @@ function App() {
         .filter((s) => s.game_id === lastGame.id)
         .map((s) => {
           const player = playerMap[s.player_id] || { name: 'Unknown', number: '?' }
-          return { number: player.number, name: player.name, goals: s.goals, assists: s.assists }
+          return { number: player.number, name: player.name, goals: s.goals, assists: s.assists, shots: s.shots_on_goal || 0, tackles: s.tackles || 0, saves: s.saves || 0 }
         })
         .sort((a, b) => a.number - b.number)
     : []

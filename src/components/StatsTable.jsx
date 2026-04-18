@@ -47,12 +47,15 @@ function StatsTable({ game, stats }) {
             <th scope="col">Player</th>
             <th scope="col" className="col-center" aria-label="Goals">⚽ Goals</th>
             <th scope="col" className="col-center" aria-label="Assists">🅰️ Assists</th>
+            <th scope="col" className="col-center" aria-label="Shots on Goal">🎯 Shots</th>
+            <th scope="col" className="col-center" aria-label="Tackles">🛡️ Tackles</th>
+            <th scope="col" className="col-center" aria-label="Saves">🧤 Saves</th>
           </tr>
         </thead>
         <tbody>
           {stats.length === 0 ? (
             <tr>
-              <td colSpan="4" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px', fontStyle: 'italic' }}>
+              <td colSpan="7" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px', fontStyle: 'italic' }}>
                 No stats recorded for this game yet.
               </td>
             </tr>
@@ -65,6 +68,9 @@ function StatsTable({ game, stats }) {
                 <td>{s.name}</td>
                 <td className="col-center">{s.goals}</td>
                 <td className="col-center">{s.assists}</td>
+                <td className="col-center">{s.shots}</td>
+                <td className="col-center">{s.tackles}</td>
+                <td className="col-center">{s.saves}</td>
               </tr>
             ))
           )}
