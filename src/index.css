@@ -151,6 +151,7 @@ header {
   margin-bottom: 20px;
   border-top: 3px solid var(--red);
   box-shadow: 0 4px 12px rgba(0,0,0,0.50);
+  overflow: hidden;
 }
 
 /* ===== 6. SECTION TITLES ========================================
