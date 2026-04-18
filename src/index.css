@@ -987,6 +987,46 @@ tbody tr:hover {
   pointer-events: none;  /* don't block clicks on the row below */
 }
 
+/* Delete (✕) button — shown only on existing player rows */
+.re-delete-btn {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  transition: color 0.15s, background 0.15s;
+}
+.re-delete-btn:hover  { color: #e57373; background: rgba(229,115,115,0.1); }
+.re-delete-btn:active { color: #e57373; }
+
+/* Spacer keeps blank rows aligned with existing-player rows */
+.re-delete-spacer,
+.re-col-delete-spacer {
+  flex: 0 0 36px;
+  width: 36px;
+}
+
+/* Inline delete confirmation row */
+.re-row-confirming {
+  flex-wrap: wrap;
+  background: rgba(229,115,115,0.08);
+  border: 1px solid rgba(229,115,115,0.3);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  gap: 8px;
+}
+.re-confirm-msg   { flex: 1 1 auto; font-size: 0.9rem; align-self: center; }
+.re-confirm-error { flex: 1 1 100%; font-size: 0.8rem; color: #e57373; }
+.re-confirm-yes,
+.re-confirm-no    { flex: 0 0 auto; padding: 8px 14px; font-size: 0.85rem; }
+
 /* Add Row button — sits below the list, left-aligned to match the rows */
 .re-add-btn {
   width: 100%;
