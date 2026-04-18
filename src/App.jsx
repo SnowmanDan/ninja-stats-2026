@@ -282,14 +282,22 @@ function App() {
       initialEvents,
       initialNotes:  game.notes || '',
     })
-    setView('logger')
+    setView('setup')  /* go through date/opponent screen before the logger */
   }
 
   function handleGameCreated(newGame) {
-    // Clear any saved draft so the logger starts fresh (not a resume)
-    localStorage.removeItem(`ninja-stats-draft-${currentTeam.id}`)
-    setSavedDraft(null)
-    setActiveGame(newGame)
+    if (activeGame?.id) {
+      /*
+        Edit mode — merge the updated date/opponent from GameSetup with the
+        existing id/initialEvents/initialNotes so the logger knows it's an edit.
+      */
+      setActiveGame((prev) => ({ ...prev, date: newGame.date, opponent: newGame.opponent }))
+    } else {
+      /* New game — clear any stale draft and start fresh */
+      localStorage.removeItem(`ninja-stats-draft-${currentTeam.id}`)
+      setSavedDraft(null)
+      setActiveGame(newGame)
+    }
     setView('logger')
   }
 
@@ -316,7 +324,9 @@ function App() {
         <PageHeader team={currentTeam} teams={teams} />
         <GameSetup
           onGameCreated={handleGameCreated}
-          onCancel={() => setView('dashboard')}
+          onCancel={() => { setActiveGame(null); setView('dashboard') }}
+          initialDate={activeGame?.date}
+          initialOpponent={activeGame?.opponent}
         />
       </div>
     )
