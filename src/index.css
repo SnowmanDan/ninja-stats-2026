@@ -191,7 +191,7 @@ thead th {
   background-color: #0a0a0a;
   color: var(--text-muted);
   text-align: left;
-  padding: 10px 12px;
+  padding: 10px 8px;
   font-size: 0.75rem;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -202,7 +202,7 @@ thead th {
    where the card background bleeds through, making body rows look misaligned. */
 
 tbody td {
-  padding: 10px 12px;
+  padding: 10px 8px;
   border-bottom: 1px solid var(--border);
   vertical-align: middle;
 }
