@@ -200,8 +200,9 @@ tbody tr:last-child td {
   border-bottom: none;
 }
 
-/* Zebra striping for long tables */
-tbody tr:nth-child(even) {
+/* Zebra striping for long tables — applied to td (not tr) so the
+   background width matches the thead th cells exactly */
+tbody tr:nth-child(even) td {
   background-color: var(--bg-card-alt);
 }
 
