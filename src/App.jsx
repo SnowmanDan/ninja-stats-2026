@@ -195,7 +195,7 @@ function App() {
           .order('number'),
 
         db.from('games')
-          .select('id, date, opponent, team_score, opponent_score')
+          .select('id, date, opponent, team_score, opponent_score, notes')
           .eq('team_id', currentTeam.id)
           .order('date', { ascending: false })
           .order('id',   { ascending: false }),  /* tiebreak: most recently logged first */
@@ -245,6 +245,46 @@ function App() {
     Called by GameSetup with the draft { date, opponent }.
     No Supabase write yet — the INSERT fires only when Save Game is tapped.
   */
+  /*
+    Called by GameHistory's Edit button. Fetches existing stats for the
+    game, reconstructs them as individual events so GameLogger can
+    display and modify them, then navigates to the logger in edit mode.
+  */
+  async function handleGameEdit(game) {
+    const { data: statsData, error } = await db
+      .from('game_stats')
+      .select('player_id, goals, assists, shots_on_goal, saves, goals_allowed')
+      .eq('game_id', game.id)
+
+    if (error) {
+      console.error('Could not load game stats for editing:', error)
+      return
+    }
+
+    /* Reconstruct individual events from aggregated stats.
+       Order within each player: Goal → Assist → Shot on Goal → Save → Goal Allowed */
+    let eventId = 0
+    const initialEvents = []
+    ;(statsData || []).forEach((stat) => {
+      const player = players.find((p) => p.id === stat.player_id)
+      if (!player) return
+      for (let i = 0; i < (stat.goals         || 0); i++) initialEvents.push({ id: eventId++, player, type: 'Goal' })
+      for (let i = 0; i < (stat.assists        || 0); i++) initialEvents.push({ id: eventId++, player, type: 'Assist' })
+      for (let i = 0; i < (stat.shots_on_goal  || 0); i++) initialEvents.push({ id: eventId++, player, type: 'Shot on Goal' })
+      for (let i = 0; i < (stat.saves          || 0); i++) initialEvents.push({ id: eventId++, player, type: 'Save' })
+      for (let i = 0; i < (stat.goals_allowed  || 0); i++) initialEvents.push({ id: eventId++, player, type: 'Goal Allowed' })
+    })
+
+    setActiveGame({
+      id:            game.id,
+      date:          game.date,
+      opponent:      game.opponent,
+      initialEvents,
+      initialNotes:  game.notes || '',
+    })
+    setView('logger')
+  }
+
   function handleGameCreated(newGame) {
     // Clear any saved draft so the logger starts fresh (not a resume)
     localStorage.removeItem(`ninja-stats-draft-${currentTeam.id}`)
@@ -376,6 +416,7 @@ function App() {
     opponent:      g.opponent,
     teamScore:     g.team_score,
     opponentScore: g.opponent_score,
+    notes:         g.notes || '',
   }))
 
   // -- Per-game stats for the most recent game (games[0]) --
@@ -474,7 +515,7 @@ function App() {
       </div>
 
       <SeasonSummary record={record} players={seasonPlayers} />
-      <GameHistory   games={gameHistory} db={db} onDelete={(id) => setGames((prev) => prev.filter((g) => g.id !== id))} />
+      <GameHistory   games={gameHistory} db={db} onDelete={(id) => setGames((prev) => prev.filter((g) => g.id !== id))} onEdit={handleGameEdit} />
       {lastGame && <StatsTable game={{ date: lastGame.date, opponent: lastGame.opponent }} stats={lastGameStats} />}
       <Roster        players={players} />
       <button className="manage-roster-link" onClick={() => setView('roster-editor')}>

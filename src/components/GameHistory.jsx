@@ -30,8 +30,8 @@
 
 import { useState, useRef } from 'react'
 
-const OPEN_OFFSET = 80  /* px the row slides left to reveal the delete button */
-const THRESHOLD   = 70  /* minimum px swipe before we snap-open instead of snap-back */
+const OPEN_OFFSET = 160  /* px the row slides left to reveal edit + delete buttons */
+const THRESHOLD   = 80   /* minimum px swipe before we snap-open instead of snap-back */
 
 function formatDate(dateStr) {
   return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
@@ -39,7 +39,7 @@ function formatDate(dateStr) {
   })
 }
 
-export default function GameHistory({ games: gamesProp, db, onDelete }) {
+export default function GameHistory({ games: gamesProp, db, onDelete, onEdit }) {
   /*
     localGames — initialized from the prop once at mount.
     We manage it locally so a successful delete removes the row instantly
@@ -252,7 +252,16 @@ export default function GameHistory({ games: gamesProp, db, onDelete }) {
                   </span>
                 </div>
 
-                {/* Delete button — sits behind the row, revealed by the slide */}
+                {/* Edit button — left of delete, revealed by the slide */}
+                <button
+                  className="gh-edit-btn"
+                  onClick={(e) => { e.stopPropagation(); closeRow(g.id); onEdit?.(g) }}
+                  aria-label={`Edit game vs. ${g.opponent} on ${formatDate(g.date)}`}
+                >
+                  Edit
+                </button>
+
+                {/* Delete button — rightmost, revealed by the slide */}
                 <button
                   className="gh-delete-btn"
                   onClick={(e) => handleDeleteClick(e, g)}

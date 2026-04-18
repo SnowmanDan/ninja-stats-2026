@@ -1,25 +1,25 @@
 /*
   GameLogger.jsx
   --------------
-  Live game logger. All events and game data are held in React state
-  until the coach taps "Save Game". Only then is anything written to
-  Supabase — one INSERT for the game row, one INSERT for the stats.
+  Live game logger — handles both new games and editing existing ones.
 
-  This means Cancel is a free local reset: nothing has been written,
-  so there is nothing to delete or clean up.
+  New game flow (game.id is undefined):
+    1. All events held in React state (+ localStorage draft for crash recovery)
+    2. On save: INSERT games → INSERT game_stats
+    3. Cancel clears the draft and calls onBack()
 
-  Save flow:
-    1. INSERT into games (date, opponent, final scores, notes, team_id)
-       → Supabase returns the new row including its auto-generated id
-    2. INSERT into game_stats (one row per player who had any events),
-       using the id from step 1
-    3. Call onBack() so App re-fetches and shows the updated dashboard
+  Edit flow (game.id is set):
+    1. game.initialEvents are pre-populated from existing game_stats
+    2. game.initialNotes is pre-populated from the existing game row
+    3. localStorage draft is NOT used — edits aren't crash-recovered
+    4. On save: UPDATE games → preserve minutes_in_goal → DELETE game_stats → INSERT game_stats
+    5. "Cancel" discards changes and calls onBack() (nothing to clean up in DB)
 
   Props:
-    game    — draft game data { date, opponent } from GameSetup
-    db      — Supabase client (used only on save)
+    game    — { date, opponent, [id], [initialEvents], [initialNotes] }
+    db      — Supabase client
     players — array of { id, name, number } from App state
-    teamId  — the current team's id (needed for the games INSERT)
+    teamId  — the current team's id (needed for INSERT)
     onBack  — callback() called after saving or cancelling
 */
 
@@ -29,15 +29,14 @@ import { useState, useEffect, useRef } from 'react'
 const EVENT_TYPES = ['Goal', 'Assist', 'Shot on Goal', 'Save', 'Goal Allowed']
 
 /* ---- localStorage draft helpers --------------------------------
-   Key is scoped to the team so a Ninjas draft never bleeds into
-   a different team's logger on the same device.
+   Only used for new games — edits aren't drafted to localStorage.
 ----------------------------------------------------------------- */
-function draftKey(teamId)    { return `ninja-stats-draft-${teamId}` }
-function readDraft(teamId)   {
+function draftKey(teamId)   { return `ninja-stats-draft-${teamId}` }
+function readDraft(teamId)  {
   try { const r = localStorage.getItem(draftKey(teamId)); return r ? JSON.parse(r) : null }
   catch { return null }
 }
-function clearDraft(teamId)  { localStorage.removeItem(draftKey(teamId)) }
+function clearDraft(teamId) { localStorage.removeItem(draftKey(teamId)) }
 
 /*
   formatDate — "2026-04-16" → "April 16, 2026"
@@ -51,40 +50,47 @@ function formatDate(dateStr) {
 
 export default function GameLogger({ game, db, players, teamId, onBack }) {
 
+  const isEditMode = !!game.id
+
   /* ---- Logging state ------------------------------------------ */
 
   /*
-    events, phase, and notes are restored from localStorage on mount
-    so a refresh or crash doesn't lose in-progress work.
-    Each entry: { id (unique int), player { id, name, number }, type (string) }
-    nextId starts above the highest saved id to avoid collisions.
+    In edit mode: start from game.initialEvents (reconstructed from DB).
+    In new game mode: restore from localStorage draft if available.
+    nextId starts above the highest existing event id to avoid collisions.
   */
-  const [events,         setEvents]         = useState(() => readDraft(teamId)?.events ?? [])
+  const [events, setEvents] = useState(() =>
+    isEditMode
+      ? (game.initialEvents ?? [])
+      : (readDraft(teamId)?.events ?? [])
+  )
   const [selectedPlayer, setSelectedPlayer] = useState(null)
   const nextId = useRef((() => {
-    const ids = readDraft(teamId)?.events?.map((e) => e.id) ?? []
+    const src = isEditMode ? (game.initialEvents ?? []) : (readDraft(teamId)?.events ?? [])
+    const ids  = src.map((e) => e.id)
     return ids.length ? Math.max(...ids) + 1 : 0
   })())
 
   /* ---- Phase / save state ------------------------------------- */
 
-  /*
-    phase: 'logging' = main game view  |  'confirm' = end-game confirmation
-  */
-  const [phase,     setPhase]     = useState(() => readDraft(teamId)?.phase ?? 'logging')
-  const [notes,     setNotes]     = useState(() => readDraft(teamId)?.notes ?? '')
+  const [phase,     setPhase]     = useState(() =>
+    isEditMode ? 'logging' : (readDraft(teamId)?.phase ?? 'logging')
+  )
+  const [notes,     setNotes]     = useState(() =>
+    isEditMode ? (game.initialNotes ?? '') : (readDraft(teamId)?.notes ?? '')
+  )
   const [saving,    setSaving]    = useState(false)
   const [saveError, setSaveError] = useState(null)
 
-  /* ---- Draft persistence -------------------------------------- */
+  /* ---- Draft persistence (new games only) --------------------- */
 
   /*
-    Write the current session to localStorage after every change so
-    a crash or refresh can be recovered. The draft is cleared on a
-    successful save or a deliberate cancel — not on every unmount,
-    because an accidental navigation IS what we want to recover from.
+    Write to localStorage on every change so a crash can be recovered.
+    Skipped in edit mode — the original game is safe in Supabase; we
+    don't want a partial edit overwriting the new-game draft slot.
   */
   useEffect(() => {
+    if (isEditMode) return
     try {
       localStorage.setItem(draftKey(teamId), JSON.stringify({ teamId, game, events, notes, phase }))
     } catch (err) {
@@ -94,33 +100,22 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
 
   /* ---- Cancel state ------------------------------------------- */
 
-  /*
-    No async work needed — cancelling just calls onBack().
-    showCancelConfirm controls the "Are you sure?" prompt.
-  */
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
 
   /* ---- Derived scores ----------------------------------------- */
 
-  /*
-    Ninjas score = total Goal events logged.
-    Opponent score = total Goal Allowed events logged.
-    These update live as events are added or removed.
-  */
   const ninjasScore   = events.filter((e) => e.type === 'Goal').length
   const opponentScore = events.filter((e) => e.type === 'Goal Allowed').length
 
   /* ---- Event handlers ----------------------------------------- */
 
   function handlePlayerSelect(player) {
-    /* Tap the already-selected player to deselect */
     setSelectedPlayer((prev) => (prev?.id === player.id ? null : player))
   }
 
   function handleEvent(type) {
     const id = nextId.current++
     setEvents((prev) => [...prev, { id, player: selectedPlayer, type }])
-    /* Deselect after logging so the coach picks the next player */
     setSelectedPlayer(null)
   }
 
@@ -128,28 +123,17 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
     setEvents((prev) => prev.filter((e) => e.id !== id))
   }
 
-  /*
-    handleSave — write everything to Supabase in two sequential steps,
-    then return to the dashboard.
+  /* ---- Save --------------------------------------------------- */
 
-    Step 1: INSERT the game row with final scores and notes.
-            We do this here (not in GameSetup) so a cancelled game
-            never touches the database.
-
-    Step 2: INSERT one game_stats row per player who had any events,
-            using the game id returned by step 1.
-  */
   async function handleSave() {
     setSaving(true)
     setSaveError(null)
 
-    /* Step 1: aggregate events by player_id */
+    /* Aggregate events by player_id — same for both modes */
     const statsByPlayer = {}
     events.forEach(({ player, type }) => {
       if (!statsByPlayer[player.id]) {
-        statsByPlayer[player.id] = {
-          goals: 0, assists: 0, shots_on_goal: 0, saves: 0, goals_allowed: 0,
-        }
+        statsByPlayer[player.id] = { goals: 0, assists: 0, shots_on_goal: 0, saves: 0, goals_allowed: 0 }
       }
       if (type === 'Goal')         statsByPlayer[player.id].goals++
       if (type === 'Assist')       statsByPlayer[player.id].assists++
@@ -158,56 +142,116 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
       if (type === 'Goal Allowed') statsByPlayer[player.id].goals_allowed++
     })
 
-    /* Step 2: INSERT the game row — final scores are known now */
-    const { data: savedGame, error: gameError } = await db
-      .from('games')
-      .insert({
-        date:           game.date,
-        opponent:       game.opponent,
-        team_score:     ninjasScore,
-        opponent_score: opponentScore,
-        notes:          notes.trim() || null,
-        team_id:        teamId,
-      })
-      .select()
-      .single()
+    if (isEditMode) {
+      /* ---- Edit mode: UPDATE game + replace stats ---- */
 
-    if (gameError) {
-      console.error('Supabase game insert error:', gameError)
-      setSaveError('Could not save game. Check the browser console for details.')
-      setSaving(false)
-      return
-    }
+      const { error: updateError } = await db
+        .from('games')
+        .update({
+          date:           game.date,
+          opponent:       game.opponent,
+          team_score:     ninjasScore,
+          opponent_score: opponentScore,
+          notes:          notes.trim() || null,
+        })
+        .eq('id', game.id)
 
-    /* Step 3: INSERT game_stats rows (skip if no events were logged) */
-    const statsRows = Object.entries(statsByPlayer).map(([player_id, stats]) => ({
-      game_id:   savedGame.id, /* id came back from step 2 */
-      player_id: Number(player_id),
-      ...stats,
-    }))
-
-    if (statsRows.length > 0) {
-      const { error: statsError } = await db.from('game_stats').insert(statsRows)
-
-      if (statsError) {
-        console.error('Supabase stats insert error:', statsError)
-        /*
-          The game row was already saved. Stats failed, but don't leave
-          the coach stranded — show a specific message so they know what
-          happened and can check the console.
-        */
-        setSaveError('Game saved but stats could not be written. Check the browser console.')
+      if (updateError) {
+        console.error('Game update error:', updateError)
+        setSaveError('Could not update game. Check the browser console for details.')
         setSaving(false)
         return
       }
+
+      /*
+        Preserve minutes_in_goal — the logger doesn't track it through events,
+        so we fetch the existing values before wiping the stats rows and
+        carry them forward into the new INSERT.
+      */
+      const { data: existingStats } = await db
+        .from('game_stats')
+        .select('player_id, minutes_in_goal')
+        .eq('game_id', game.id)
+
+      const minutesMap = {}
+      existingStats?.forEach((s) => { minutesMap[s.player_id] = s.minutes_in_goal || 0 })
+
+      /* DELETE all existing stats for this game */
+      const { error: deleteError } = await db
+        .from('game_stats')
+        .delete()
+        .eq('game_id', game.id)
+
+      if (deleteError) {
+        console.error('Stats delete error:', deleteError)
+        setSaveError('Could not replace stats. Check the browser console for details.')
+        setSaving(false)
+        return
+      }
+
+      /* INSERT updated stats, restoring any goalie minutes */
+      const statsRows = Object.entries(statsByPlayer).map(([player_id, stats]) => ({
+        game_id:         game.id,
+        player_id:       Number(player_id),
+        minutes_in_goal: minutesMap[Number(player_id)] || 0,
+        ...stats,
+      }))
+
+      if (statsRows.length > 0) {
+        const { error: insertError } = await db.from('game_stats').insert(statsRows)
+        if (insertError) {
+          console.error('Stats insert error:', insertError)
+          setSaveError('Game updated but stats could not be saved. Check the browser console for details.')
+          setSaving(false)
+          return
+        }
+      }
+
+    } else {
+      /* ---- New game mode: INSERT game → INSERT stats ---- */
+
+      const { data: savedGame, error: gameError } = await db
+        .from('games')
+        .insert({
+          date:           game.date,
+          opponent:       game.opponent,
+          team_score:     ninjasScore,
+          opponent_score: opponentScore,
+          notes:          notes.trim() || null,
+          team_id:        teamId,
+        })
+        .select()
+        .single()
+
+      if (gameError) {
+        console.error('Supabase game insert error:', gameError)
+        setSaveError('Could not save game. Check the browser console for details.')
+        setSaving(false)
+        return
+      }
+
+      const statsRows = Object.entries(statsByPlayer).map(([player_id, stats]) => ({
+        game_id:   savedGame.id,
+        player_id: Number(player_id),
+        ...stats,
+      }))
+
+      if (statsRows.length > 0) {
+        const { error: statsError } = await db.from('game_stats').insert(statsRows)
+        if (statsError) {
+          console.error('Supabase stats insert error:', statsError)
+          setSaveError('Game saved but stats could not be written. Check the browser console.')
+          setSaving(false)
+          return
+        }
+      }
     }
 
-    /* Both writes succeeded — clear the draft and return to dashboard */
     clearDraft(teamId)
     onBack()
   }
 
-  /* ---- Confirm (end-game) phase ------------------------------- */
+  /* ---- Confirm phase ------------------------------------------ */
 
   if (phase === 'confirm') {
     const resultLabel =
@@ -222,7 +266,6 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
 
     return (
       <div>
-        {/* Score banner */}
         <div className="logger-scoreboard">
           <span className="logger-score-team">Ninjas</span>
           <span className="logger-score-num ninjas-score">{ninjasScore}</span>
@@ -232,7 +275,7 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
         </div>
 
         <div className="card">
-          <h2 className="section-title">End Game</h2>
+          <h2 className="section-title">{isEditMode ? 'Review Changes' : 'End Game'}</h2>
 
           <div className="confirm-summary">
             <span className="confirm-score-text">
@@ -267,7 +310,7 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
               onClick={handleSave}
               disabled={saving}
             >
-              {saving ? 'Saving…' : 'Save Game'}
+              {saving ? 'Saving…' : isEditMode ? 'Save Changes' : 'Save Game'}
             </button>
             <button
               className="btn btn-ghost"
@@ -368,22 +411,26 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
         </div>
       )}
 
-      {/* ── Cancel confirmation ──────────────────────────────────── */}
+      {/* ── Cancel / Discard confirmation ────────────────────────── */}
       {showCancelConfirm && (
         <div className="card cancel-confirm-card">
-          <p className="cancel-confirm-question">Cancel this game?</p>
+          <p className="cancel-confirm-question">
+            {isEditMode ? 'Discard changes?' : 'Cancel this game?'}
+          </p>
           <p className="cancel-confirm-detail">
-            No data has been saved yet. All logged events will be discarded.
+            {isEditMode
+              ? 'Your changes will not be saved. The original game data will be kept.'
+              : 'No data has been saved yet. All logged events will be discarded.'}
           </p>
           <div className="form-actions">
             <button className="btn btn-primary" onClick={() => { clearDraft(teamId); onBack() }}>
-              Yes, Cancel Game
+              {isEditMode ? 'Yes, Discard' : 'Yes, Cancel Game'}
             </button>
             <button
               className="btn btn-ghost"
               onClick={() => setShowCancelConfirm(false)}
             >
-              No, Keep Playing
+              {isEditMode ? 'Keep Editing' : 'No, Keep Playing'}
             </button>
           </div>
         </div>
@@ -395,13 +442,13 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
           className="btn btn-end-game"
           onClick={() => setPhase('confirm')}
         >
-          End Game
+          {isEditMode ? 'Review Changes' : 'End Game'}
         </button>
         <button
           className="btn btn-cancel-game"
           onClick={() => { setShowCancelConfirm(true); setSelectedPlayer(null) }}
         >
-          Cancel Game
+          {isEditMode ? 'Discard' : 'Cancel Game'}
         </button>
       </div>
 
