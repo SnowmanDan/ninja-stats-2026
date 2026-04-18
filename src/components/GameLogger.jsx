@@ -201,7 +201,7 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
         const { error: insertError } = await db.from('game_stats').insert(statsRows)
         if (insertError) {
           console.error('Stats insert error:', insertError)
-          setSaveError('Game updated but stats could not be saved. Check the browser console for details.')
+          setSaveError(`Stats save failed: ${insertError.message || insertError.code || 'unknown error'}`)
           setSaving(false)
           return
         }
