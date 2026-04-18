@@ -1022,7 +1022,7 @@ tbody tr:hover {
   padding: 10px 12px;
   gap: 8px;
 }
-.re-confirm-msg   { flex: 1 1 auto; font-size: 0.9rem; align-self: center; }
+.re-confirm-msg   { flex: 1 1 100%; font-size: 0.9rem; }
 .re-confirm-error { flex: 1 1 100%; font-size: 0.8rem; color: #e57373; }
 .re-confirm-yes,
 .re-confirm-no    { flex: 0 0 auto; padding: 8px 14px; font-size: 0.85rem; }
