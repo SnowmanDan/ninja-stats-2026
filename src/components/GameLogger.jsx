@@ -48,9 +48,46 @@ function formatDate(dateStr) {
   })
 }
 
+/* formatTime — turns a number of seconds into "MM:SS" */
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60).toString().padStart(2, '0')
+  const s = (seconds % 60).toString().padStart(2, '0')
+  return `${m}:${s}`
+}
+
 export default function GameLogger({ game, db, players, teamId, onBack }) {
 
   const isEditMode = !!game.id
+
+  /* ---- Timer state -------------------------------------------- */
+
+  const [timerSeconds, setTimerSeconds] = useState(0)
+  const [timerRunning, setTimerRunning] = useState(false)
+  const timerRef = useRef(null)
+
+  /* Clean up the interval if the component unmounts mid-game */
+  useEffect(() => {
+    return () => clearInterval(timerRef.current)
+  }, [])
+
+  function startTimer() {
+    if (timerRunning) return
+    setTimerRunning(true)
+    timerRef.current = setInterval(() => {
+      setTimerSeconds((s) => s + 1)
+    }, 1000)
+  }
+
+  function pauseTimer() {
+    clearInterval(timerRef.current)
+    setTimerRunning(false)
+  }
+
+  function resetTimer() {
+    clearInterval(timerRef.current)
+    setTimerRunning(false)
+    setTimerSeconds(0)
+  }
 
   /* ---- Logging state ------------------------------------------ */
 
@@ -341,6 +378,20 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
       </div>
 
       <p className="logger-game-date">{formatDate(game.date)}</p>
+
+      {/* ── Game timer ───────────────────────────────────────────── */}
+      <div className="card timer-card">
+        <span className="timer-display">{formatTime(timerSeconds)}</span>
+        <div className="timer-controls">
+          {!timerRunning ? (
+            <button className="timer-btn timer-btn-play" onClick={startTimer} aria-label="Play">▶</button>
+          ) : (
+            <button className="timer-btn timer-btn-pause" onClick={pauseTimer} aria-label="Pause">⏸</button>
+          )}
+          <button className="timer-btn timer-btn-halftime" onClick={pauseTimer} aria-label="Half time">HT</button>
+          <button className="timer-btn timer-btn-reset" onClick={resetTimer} aria-label="Reset">↺</button>
+        </div>
+      </div>
 
       {/* ── Player selector ──────────────────────────────────────── */}
       <div className="card">

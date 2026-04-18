@@ -323,7 +323,7 @@ function App() {
   if (view === 'setup') {
     return (
       <div className="page-wrapper">
-        <PageHeader team={currentTeam} teams={teams} />
+        <PageHeader team={currentTeam} teams={teams} compact />
         <GameSetup
           onGameCreated={handleGameCreated}
           onCancel={() => { setActiveGame(null); setView('dashboard') }}
@@ -337,7 +337,7 @@ function App() {
   if (view === 'logger') {
     return (
       <div className="page-wrapper">
-        <PageHeader team={currentTeam} teams={teams} />
+        <PageHeader team={currentTeam} teams={teams} compact />
         <GameLogger game={activeGame} db={db} players={players} teamId={currentTeam.id} onBack={handleBackToDashboard} />
       </div>
     )
@@ -346,7 +346,7 @@ function App() {
   if (view === 'roster-editor') {
     return (
       <div className="page-wrapper">
-        <PageHeader team={currentTeam} teams={teams} />
+        <PageHeader team={currentTeam} teams={teams} compact />
         <RosterEditor
           players={players}
           db={db}
@@ -554,28 +554,31 @@ function App() {
      team  — the current team object ({ id, name, slug, season })
      teams — all teams (passed through to TeamSwitcher)
 ================================================================ */
-function PageHeader({ team, teams }) {
+function PageHeader({ team, teams, compact = false }) {
   // Defensive: during the very first render before teams load,
   // team is null. Show a placeholder so the layout doesn't jump.
   const teamName  = team ? team.name   : '…'
   const season    = team ? team.season : ''
 
   return (
-    <header>
+    <header className={compact ? 'header-compact' : ''}>
       <div className="header-inner">
-        <PixelPlayers />
+        {/* Hide pixel players in compact mode so logger/roster screens
+            have more vertical space for actions */}
+        {!compact && <PixelPlayers />}
 
         <div className="header-center">
           <h1 className="team-name">{teamName}</h1>
           {season && <p className="season-label">{season} Season</p>}
         </div>
 
-        <PixelPlayers mirrored />
+        {!compact && <PixelPlayers mirrored />}
       </div>
 
       {/* Team switcher sits below the title so it doesn't crowd the
-          pixel players. Hidden when there's only one team. */}
-      <TeamSwitcher teams={teams} currentSlug={team ? team.slug : ''} />
+          pixel players. Hidden when there's only one team, and hidden
+          in compact mode (logger/roster screens). */}
+      {!compact && <TeamSwitcher teams={teams} currentSlug={team ? team.slug : ''} />}
     </header>
   )
 }

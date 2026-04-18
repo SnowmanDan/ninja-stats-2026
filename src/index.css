@@ -139,6 +139,22 @@ header {
   margin-top: 4px;
 }
 
+/* Compact header — used on logger and roster-editor screens to give
+   more vertical space for actions. No pixel players, smaller text. */
+.header-compact {
+  padding: 12px 16px 10px;
+  margin-bottom: 16px;
+}
+
+.header-compact .team-name {
+  font-size: 1.4rem;
+  letter-spacing: 2px;
+}
+
+.header-compact .season-label {
+  display: none;
+}
+
 /* ===== 5. CARDS =================================================
    Each section lives in a card — a slightly lighter surface that
    floats above the dark page background. The red top stripe is the
@@ -585,6 +601,49 @@ tbody tr:hover {
   margin-bottom: 16px;
   margin-top: -8px; /* tuck up under the scoreboard */
 }
+
+/* ===== 15. GAME LOGGER — TIMER ===================================
+   Large monospace clock display + play/pause/reset controls.
+================================================================= */
+.timer-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--red);
+}
+
+.timer-display {
+  font-size: 1.6rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 3px;
+  color: var(--white);
+  flex: 1; /* push controls to the right */
+}
+
+.timer-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.timer-btn {
+  width: 44px;
+  height: 44px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timer-btn-play     { background: #2e7d32; color: #fff; }
+.timer-btn-pause    { background: #e65100; color: #fff; }
+.timer-btn-halftime { background: #1565c0; color: #fff; font-size: 0.75rem; letter-spacing: 0.5px; }
+.timer-btn-reset    { background: var(--bg-card-alt); color: var(--text-muted); }
 
 /* ===== 15. GAME LOGGER — PLAYER GRID ============================
    3-column grid of large tap-target buttons.
