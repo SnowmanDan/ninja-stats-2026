@@ -187,8 +187,9 @@ thead th {
   text-transform: uppercase;
 }
 
-thead th:first-child { border-radius: var(--radius) 0 0 0; }
-thead th:last-child  { border-radius: 0 var(--radius) 0 0; }
+/* No border-radius on th cells — the card itself provides rounded corners,
+   and rounding individual cells creates a visual notch at the top-right corner
+   where the card background bleeds through, making body rows look misaligned. */
 
 tbody td {
   padding: 10px 12px;
