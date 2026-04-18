@@ -168,9 +168,17 @@ header {
 }
 
 /* ===== 7. TABLES ================================================
-   width:100% fills the card. border-collapse removes the gap
-   between adjacent cell borders.
+   .table-wrap is a block-level div that wraps every <table>.
+   Safari computes `width: 100%` on a <table> relative to the
+   parent's border box (including padding), causing the table to
+   touch the card edges. The wrapper div gives the table a proper
+   block-level containing block so the percentage is computed
+   correctly. overflow: hidden clips any row-background bleed.
 ================================================================= */
+.table-wrap {
+  overflow: hidden;
+}
+
 table {
   width: 100%;
   max-width: 100%;   /* prevent table from overflowing its container on narrow screens */

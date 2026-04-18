@@ -24,6 +24,7 @@ function Roster({ players }) {
     <section className="card" aria-labelledby="roster-heading">
       <h2 className="section-title" id="roster-heading">Roster</h2>
 
+      <div className="table-wrap">
       <table>
         <thead>
           <tr>
@@ -50,6 +51,7 @@ function Roster({ players }) {
           )}
         </tbody>
       </table>
+      </div>
     </section>
   )
 }

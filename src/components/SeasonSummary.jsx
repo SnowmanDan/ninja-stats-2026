@@ -50,6 +50,7 @@ function SeasonSummary({ record, players }) {
         Only players with at least one goal or assist are shown
         (that filtering happens in App.jsx before passing the prop).
       */}
+      <div className="table-wrap">
       <table>
         <thead>
           <tr>
@@ -89,6 +90,7 @@ function SeasonSummary({ record, players }) {
           )}
         </tbody>
       </table>
+      </div>
     </section>
   )
 }

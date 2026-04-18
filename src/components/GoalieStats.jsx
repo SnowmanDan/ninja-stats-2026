@@ -98,6 +98,7 @@ function GoalieStats({ seasonTotals, byGame }) {
 
           {/* ---- Sub-section A: Season Totals ---- */}
           <p className="subsection-label">Season Totals</p>
+          <div className="table-wrap">
           <table>
             <thead>
               <tr>
@@ -132,6 +133,7 @@ function GoalieStats({ seasonTotals, byGame }) {
               )}
             </tbody>
           </table>
+          </div>
 
           {/* ---- Sub-section B: By Game ---- */}
           <p className="subsection-label">By Game</p>
@@ -146,6 +148,7 @@ function GoalieStats({ seasonTotals, byGame }) {
                 <p className="game-goalie-label">
                   {formatDate(game.date)} vs {game.opponent}
                 </p>
+                <div className="table-wrap">
                 <table>
                   <thead>
                     <tr>
@@ -166,6 +169,7 @@ function GoalieStats({ seasonTotals, byGame }) {
                     ))}
                   </tbody>
                 </table>
+                </div>
               </div>
             ))
           )}

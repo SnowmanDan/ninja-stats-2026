@@ -39,6 +39,7 @@ function StatsTable({ game, stats }) {
         Game Stats — {formattedDate}
       </h2>
 
+      <div className="table-wrap">
       <table>
         <thead>
           <tr>
@@ -69,6 +70,7 @@ function StatsTable({ game, stats }) {
           )}
         </tbody>
       </table>
+      </div>
     </section>
   )
 }
