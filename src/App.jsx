@@ -308,6 +308,7 @@ function App() {
   */
   function handleBackToDashboard() {
     setView('dashboard')
+    setActiveGame(null)
     setRefreshKey((k) => k + 1)
   }
 
@@ -519,7 +520,7 @@ function App() {
             + Add Roster
           </button>
         )}
-        <button className="btn btn-primary" onClick={() => setView('setup')}>
+        <button className="btn btn-primary" onClick={() => { setActiveGame(null); setView('setup') }}>
           + New Game
         </button>
       </div>
