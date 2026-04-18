@@ -26,7 +26,7 @@
 import { useState, useEffect, useRef } from 'react'
 
 /* The five things a coach can log for a player */
-const EVENT_TYPES = ['Goal', 'Assist', 'Shot on Goal', 'Save', 'Goal Allowed']
+const EVENT_TYPES = ['Goal', 'Assist', 'Shot on Goal', 'Block', 'Save', 'Goal Allowed']
 
 /* ---- localStorage draft helpers --------------------------------
    Only used for new games — edits aren't drafted to localStorage.
@@ -133,11 +133,12 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
     const statsByPlayer = {}
     events.forEach(({ player, type }) => {
       if (!statsByPlayer[player.id]) {
-        statsByPlayer[player.id] = { goals: 0, assists: 0, shots_on_goal: 0, saves: 0, goals_allowed: 0 }
+        statsByPlayer[player.id] = { goals: 0, assists: 0, shots_on_goal: 0, blocks: 0, saves: 0, goals_allowed: 0 }
       }
       if (type === 'Goal')         statsByPlayer[player.id].goals++
       if (type === 'Assist')       statsByPlayer[player.id].assists++
       if (type === 'Shot on Goal') statsByPlayer[player.id].shots_on_goal++
+      if (type === 'Block')        statsByPlayer[player.id].blocks++
       if (type === 'Save')         statsByPlayer[player.id].saves++
       if (type === 'Goal Allowed') statsByPlayer[player.id].goals_allowed++
     })

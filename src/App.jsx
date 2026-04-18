@@ -253,7 +253,7 @@ function App() {
   async function handleGameEdit(game) {
     const { data: statsData, error } = await db
       .from('game_stats')
-      .select('player_id, goals, assists, shots_on_goal, saves, goals_allowed')
+      .select('player_id, goals, assists, shots_on_goal, blocks, saves, goals_allowed')
       .eq('game_id', game.id)
 
     if (error) {
@@ -262,7 +262,7 @@ function App() {
     }
 
     /* Reconstruct individual events from aggregated stats.
-       Order within each player: Goal → Assist → Shot on Goal → Save → Goal Allowed */
+       Order within each player: Goal → Assist → Shot on Goal → Block → Save → Goal Allowed */
     let eventId = 0
     const initialEvents = []
     ;(statsData || []).forEach((stat) => {
@@ -271,6 +271,7 @@ function App() {
       for (let i = 0; i < (stat.goals         || 0); i++) initialEvents.push({ id: eventId++, player, type: 'Goal' })
       for (let i = 0; i < (stat.assists        || 0); i++) initialEvents.push({ id: eventId++, player, type: 'Assist' })
       for (let i = 0; i < (stat.shots_on_goal  || 0); i++) initialEvents.push({ id: eventId++, player, type: 'Shot on Goal' })
+      for (let i = 0; i < (stat.blocks         || 0); i++) initialEvents.push({ id: eventId++, player, type: 'Block' })
       for (let i = 0; i < (stat.saves          || 0); i++) initialEvents.push({ id: eventId++, player, type: 'Save' })
       for (let i = 0; i < (stat.goals_allowed  || 0); i++) initialEvents.push({ id: eventId++, player, type: 'Goal Allowed' })
     })
