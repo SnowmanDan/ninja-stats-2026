@@ -45,8 +45,8 @@ function StatsTable({ game, stats }) {
           <tr>
             <th scope="col">#</th>
             <th scope="col">Player</th>
-            <th scope="col" className="col-center" aria-label="Goals">⚽</th>
-            <th scope="col" className="col-center" aria-label="Assists">🅰️</th>
+            <th scope="col" className="col-center" aria-label="Goals">⚽ Goals</th>
+            <th scope="col" className="col-center" aria-label="Assists">🅰️ Assists</th>
           </tr>
         </thead>
         <tbody>
