@@ -42,7 +42,7 @@
 import { useState, useEffect, useRef } from 'react'
 
 const BLANK = () => ({ id: null, name: '', number: '' })
-const INITIAL_BLANKS = 3
+const INITIAL_BLANKS = 1
 
 export default function RosterEditor({ players, db, teamId, onBack }) {
 
@@ -209,16 +209,9 @@ export default function RosterEditor({ players, db, teamId, onBack }) {
   return (
     <div className="card">
 
-      {/* ── Header row: title + Save button ──────────────────────── */}
+      {/* ── Header row: title only ───────────────────────────────── */}
       <div className="re-header">
         <h2 className="section-title" style={{ marginBottom: 0 }}>Manage Roster</h2>
-        <button
-          className="btn btn-primary"
-          onClick={handleSave}
-          disabled={saving}
-        >
-          {saving ? 'Saving…' : 'Save Roster'}
-        </button>
       </div>
 
       {saveError && <p className="form-error" style={{ marginTop: 12 }}>{saveError}</p>}
@@ -314,6 +307,13 @@ export default function RosterEditor({ players, db, teamId, onBack }) {
       </button>
 
       <div className="form-actions" style={{ marginTop: 20 }}>
+        <button
+          className="btn btn-primary"
+          onClick={handleSave}
+          disabled={saving}
+        >
+          {saving ? 'Saving…' : 'Save Roster'}
+        </button>
         <button className="btn btn-ghost" onClick={onBack} disabled={saving}>
           ← Back
         </button>
