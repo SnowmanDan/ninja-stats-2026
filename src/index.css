@@ -176,7 +176,8 @@ header {
    correctly. overflow: hidden clips any row-background bleed.
 ================================================================= */
 .table-wrap {
-  overflow: hidden;
+  /* block wrapper so Safari computes table width:100% against the content
+     box (not the card border-box). No overflow:hidden — that clips columns. */
 }
 
 table {

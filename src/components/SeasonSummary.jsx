@@ -57,9 +57,9 @@ function SeasonSummary({ record, players }) {
             <th scope="col">#</th>
             <th scope="col">Player</th>
             {/* aria-label gives screen readers a real description instead of just the emoji */}
-            <th scope="col" className="col-center" aria-label="Goals">⚽ Goals</th>
-            <th scope="col" className="col-center" aria-label="Assists">🅰️ Assists</th>
-            <th scope="col" className="col-center" aria-label="Shots on Goal">🎯 Shots</th>
+            <th scope="col" className="col-center" aria-label="Goals">⚽</th>
+            <th scope="col" className="col-center" aria-label="Assists">🅰️</th>
+            <th scope="col" className="col-center" aria-label="Shots on Goal">🎯</th>
           </tr>
         </thead>
         <tbody>
