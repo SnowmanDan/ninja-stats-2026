@@ -306,16 +306,16 @@ export default function RosterEditor({ players, db, teamId, onBack }) {
         + Add Row
       </button>
 
-      <div className="form-actions" style={{ marginTop: 20 }}>
+      <div className="form-actions" style={{ marginTop: 20, justifyContent: 'space-between' }}>
+        <button className="btn btn-ghost" onClick={onBack} disabled={saving}>
+          ← Back
+        </button>
         <button
           className="btn btn-primary"
           onClick={handleSave}
           disabled={saving}
         >
           {saving ? 'Saving…' : 'Save Roster'}
-        </button>
-        <button className="btn btn-ghost" onClick={onBack} disabled={saving}>
-          ← Back
         </button>
       </div>
 

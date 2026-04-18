@@ -151,7 +151,6 @@ header {
   margin-bottom: 20px;
   border-top: 3px solid var(--red);
   box-shadow: 0 4px 12px rgba(0,0,0,0.50);
-  overflow: hidden;
 }
 
 /* ===== 6. SECTION TITLES ========================================
@@ -174,6 +173,7 @@ header {
 ================================================================= */
 table {
   width: 100%;
+  max-width: 100%;   /* prevent table from overflowing its container on narrow screens */
   border-collapse: collapse;
   font-size: 0.9rem;
 }
