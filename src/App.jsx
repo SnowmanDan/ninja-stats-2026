@@ -97,8 +97,9 @@ function App() {
     routes (e.g. /ninjas/setup, /ninjas/logger/:gameId).
   */
   const [view,       setView]       = useState('dashboard')
-  const [activeGame, setActiveGame] = useState(null)
-  const [refreshKey, setRefreshKey] = useState(0)
+  const [activeGame,      setActiveGame]      = useState(null)
+  const [refreshKey,      setRefreshKey]      = useState(0)
+  const [selectedGameId,  setSelectedGameId]  = useState(null) /* null = show most recent */
 
   // Saved draft from a previous logger session (crash / accidental refresh)
   const [savedDraft, setSavedDraft] = useState(null)
@@ -433,11 +434,11 @@ function App() {
     notes:         g.notes || '',
   }))
 
-  // -- Per-game stats for the most recent game (games[0]) --
-  const lastGame = games[0]
-  const lastGameStats = lastGame
+  // -- Per-game stats: show the selected game, defaulting to the most recent --
+  const selectedGame = (selectedGameId ? games.find((g) => g.id === selectedGameId) : null) ?? games[0]
+  const selectedGameStats = selectedGame
     ? allStats
-        .filter((s) => s.game_id === lastGame.id)
+        .filter((s) => s.game_id === selectedGame.id)
         .map((s) => {
           const player = playerMap[s.player_id] || { name: 'Unknown', number: '?' }
           return { number: player.number, name: player.name, goals: s.goals, assists: s.assists, shots: s.shots_on_goal || 0, tackles: s.tackles || 0, saves: s.saves || 0 }
@@ -529,8 +530,15 @@ function App() {
       </div>
 
       <SeasonSummary record={record} players={seasonPlayers} />
-      <GameHistory   games={gameHistory} db={db} onDelete={(id) => setGames((prev) => prev.filter((g) => g.id !== id))} onEdit={handleGameEdit} />
-      {lastGame && <StatsTable game={{ date: lastGame.date, opponent: lastGame.opponent }} stats={lastGameStats} />}
+      <GameHistory
+        games={gameHistory}
+        db={db}
+        onDelete={(id) => setGames((prev) => prev.filter((g) => g.id !== id))}
+        onEdit={handleGameEdit}
+        onSelectGame={setSelectedGameId}
+        selectedGameId={selectedGameId ?? games[0]?.id}
+      />
+      {selectedGame && <StatsTable game={{ date: selectedGame.date, opponent: selectedGame.opponent }} stats={selectedGameStats} />}
       <Roster        players={players} />
       <button className="manage-roster-link" onClick={() => setView('roster-editor')}>
         Manage Roster

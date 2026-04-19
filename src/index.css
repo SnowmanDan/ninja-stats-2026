@@ -1169,6 +1169,11 @@ tbody tr:hover {
   background: var(--bg-card-alt);
 }
 
+.gh-swipe-container.gh-selected {
+  background: #2a1010; /* solid dark red — opaque so buttons don't bleed through */
+  border-left: 3px solid var(--red);
+}
+
 /*
   The sliding row. We apply will-change: transform so the browser
   composites this layer separately — smoother swipe animation.

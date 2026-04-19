@@ -39,7 +39,7 @@ function formatDate(dateStr) {
   })
 }
 
-export default function GameHistory({ games: gamesProp, db, onDelete, onEdit }) {
+export default function GameHistory({ games: gamesProp, db, onDelete, onEdit, onSelectGame, selectedGameId }) {
   /*
     localGames — initialized from the prop once at mount.
     We manage it locally so a successful delete removes the row instantly
@@ -49,7 +49,13 @@ export default function GameHistory({ games: gamesProp, db, onDelete, onEdit }) 
     syncing would overwrite local deletions whenever App re-renders.
   */
   const [localGames,   setLocalGames]   = useState(gamesProp)
-  const [openId,       setOpenId]       = useState(null)   /* id of the currently swiped-open row */
+  const [openId,       setOpenIdState]  = useState(null)   /* id of the currently swiped-open row */
+  const openIdRef = useRef(null)  /* mirrors openId but readable synchronously in click handlers */
+
+  function setOpenId(id) {
+    openIdRef.current = id
+    setOpenIdState(id)
+  }
   const [confirmGame,  setConfirmGame]  = useState(null)   /* game pending delete confirmation */
   const [deleting,     setDeleting]     = useState(false)
   const [deleteError,  setDeleteError]  = useState(null)
@@ -64,6 +70,7 @@ export default function GameHistory({ games: gamesProp, db, onDelete, onEdit }) 
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
   const isScrolling = useRef(false) /* true once we detect vertical scroll intent */
+  const wasSwiping  = useRef(false) /* true if the touch moved enough to count as a swipe */
 
   /* ---- Row helpers -------------------------------------------- */
 
@@ -91,6 +98,7 @@ export default function GameHistory({ games: gamesProp, db, onDelete, onEdit }) 
     touchStartX.current = e.touches[0].clientX
     touchStartY.current = e.touches[0].clientY
     isScrolling.current = false
+    wasSwiping.current  = false
 
     /* Close any previously open row before this swipe begins */
     if (openId !== null && openId !== id) {
@@ -101,6 +109,10 @@ export default function GameHistory({ games: gamesProp, db, onDelete, onEdit }) 
   function handleTouchMove(e, id) {
     const dx = e.touches[0].clientX - touchStartX.current
     const dy = e.touches[0].clientY - touchStartY.current
+
+    /* Mark as a swipe once the finger moves enough — prevents tap from
+       accidentally triggering a row select when the finger barely moves */
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) wasSwiping.current = true
 
     /*
       Detect vertical scroll intent on the first meaningful movement.
@@ -139,6 +151,18 @@ export default function GameHistory({ games: gamesProp, db, onDelete, onEdit }) 
     } else {
       closeRow(id)
     }
+  }
+
+  /* ---- Row tap (select game) ---------------------------------- */
+
+  function handleRowClick(e, game) {
+    /* Ignore if this was really a swipe, or if a row was just opened.
+       Check openIdRef (not openId state) — React state is async and
+       may not have updated yet when this click handler fires. */
+    if (wasSwiping.current) return
+    if (openIdRef.current !== null) return
+    e.stopPropagation()
+    onSelectGame?.(game.id)
   }
 
   /* ---- Delete flow -------------------------------------------- */
@@ -231,7 +255,7 @@ export default function GameHistory({ games: gamesProp, db, onDelete, onEdit }) 
               result === 'win' ? 'Win' : result === 'loss' ? 'Loss' : 'Tie'
 
             return (
-              <li key={g.id} className={`gh-swipe-container${i % 2 === 1 ? ' gh-alt' : ''}`}>
+              <li key={g.id} className={`gh-swipe-container${i % 2 === 1 ? ' gh-alt' : ''}${g.id === selectedGameId ? ' gh-selected' : ''}`}>
 
                 {/* Sliding row — transform managed via ref, not JSX style prop */}
                 <div
@@ -243,6 +267,7 @@ export default function GameHistory({ games: gamesProp, db, onDelete, onEdit }) 
                   onTouchStart={(e) => handleTouchStart(e, g.id)}
                   onTouchMove={(e)  => handleTouchMove(e, g.id)}
                   onTouchEnd={(e)   => handleTouchEnd(e, g.id)}
+                  onClick={(e)      => handleRowClick(e, g)}
                 >
                   <span className="gh-col-date">{formatDate(g.date)}</span>
                   <span className="gh-col-opponent">{g.opponent}</span>
