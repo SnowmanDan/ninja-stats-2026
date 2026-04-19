@@ -326,20 +326,6 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
             {events.length} event{events.length !== 1 ? 's' : ''} logged
           </p>
 
-          <div className="form-group">
-            <label className="form-label" htmlFor="game-notes">
-              Game Notes (optional)
-            </label>
-            <textarea
-              id="game-notes"
-              className="form-input form-textarea"
-              placeholder="Great defensive game, Eleanora had two saves…"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={3}
-            />
-          </div>
-
           {saveError && <p className="form-error">{saveError}</p>}
 
           <div className="form-actions">
@@ -462,6 +448,19 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
           </ul>
         </div>
       )}
+
+      {/* ── Game notes ───────────────────────────────────────────── */}
+      <div className="card">
+        <label className="form-label" htmlFor="game-notes">Game Notes (optional)</label>
+        <textarea
+          id="game-notes"
+          className="form-input form-textarea"
+          placeholder="Great defensive game, Eleanora had two saves…"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          rows={3}
+        />
+      </div>
 
       {/* ── Cancel / Discard confirmation ────────────────────────── */}
       {showCancelConfirm && (
