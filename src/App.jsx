@@ -35,12 +35,20 @@ import TeamSwitcher  from './components/TeamSwitcher'
    SUPABASE CLIENT
    ----------------------------------------------------------------
    createClient() sets up the connection to our Supabase project.
-   The anon key is the public key — safe to include here because
-   Supabase's Row Level Security (RLS) controls what it can access.
+   The anon key is the public-facing key — safe to expose in the
+   browser because Supabase's Row Level Security (RLS) controls
+   what it can actually access.
+
+   Credentials are read from environment variables so dev and prod
+   can point at different Supabase projects:
+     - Local dev:  .env.development  (gitignored)
+     - Local prod: .env.production   (gitignored)
+     - Vercel:     set in dashboard → Project Settings → Environment Variables
+
    Find both values in: Supabase Dashboard → Project Settings → API
 ================================================================ */
-const SUPABASE_URL      = 'https://vzktoeqmnezrcrqtuvkx.supabase.co'
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6a3RvZXFtbmV6cmNycXR1dmt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxODI5MTgsImV4cCI6MjA5MDc1ODkxOH0.SO2yaLAQrmgRw_mIGK7mgQlQr5q5KCtvYvB5kzsKmPA'
+const SUPABASE_URL      = import.meta.env.VITE_SUPABASE_URL
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 /*
   createClient is called once, outside the component, so the same

@@ -2,3 +2,10 @@ node_modules/
 dist/
 Screenshots/
 .DS_Store
+
+# Environment variable files — never commit credentials
+.env
+.env.local
+.env.development
+.env.production
+.env.*.local

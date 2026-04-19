@@ -91,9 +91,35 @@ soccer-stats/
 - **Dashboard:** full header with pixel player graphics and team switcher dropdown
 - **Logger / GameSetup / RosterEditor:** compact header (smaller text, no pixel players, no team switcher) to maximize screen space for actions
 
+## Environment Variables
+Supabase credentials are read from environment variables — never hardcoded.
+
+| File | Purpose | Committed? |
+|------|---------|-----------|
+| `.env.example` | Template showing required variable names | ✅ Yes |
+| `.env.development` | Dev Supabase project credentials | ❌ Gitignored |
+| `.env.production` | Prod Supabase project credentials | ❌ Gitignored |
+
+**Variables:**
+```
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key-here
+```
+
+Vite exposes these to the app via `import.meta.env.VITE_*`.
+
+**Vercel dashboard** (Project Settings → Environment Variables):
+- **Production** environment → prod Supabase URL + anon key
+- **Preview** environment → dev Supabase URL + anon key
+
+## Branch Strategy
+- `main` → auto-deploys to Vercel Production (prod Supabase)
+- `dev` → auto-deploys to Vercel Preview (dev Supabase)
+- Feature work happens on `dev`, merged to `main` when ready to ship
+
 ## Common Commands
-- `npm run dev` — start the local Vite dev server
-- `npm run build` — production build into `dist/`
+- `npm run dev` — start the local Vite dev server (uses `.env.development`)
+- `npm run build` — production build into `dist/` (uses `.env.production`)
 - `npm run preview` — preview the built site locally
 
 ## Accessibility
