@@ -3,7 +3,7 @@
 ## Project Overview
 A youth soccer team stats site for the **Ninjas** — Lindbergh School District Girls 1st Grade Soccer (Spring 2026). Displays roster, season summary, per-game stats, goalie stats, and game history. Being evolved into a mobile-first PWA for live sideline stat tracking with freemium productization as the long-term goal.
 
-See `ninja-stats-project-plan.md` for the full phased roadmap. Current focus: **Phase 0 — React migration** (Sessions 2–3). Phase 1 (live game logger) work has already started in `GameLogger.jsx` / `GameSetup.jsx`.
+See `ninja-stats-project-plan.md` for the full phased roadmap. **Phase 0 (React migration) and Phase 1 (live game logger) are complete.** Current focus is polish, UX improvements, and sideline usability.
 
 ## Tech Stack
 - **React 18** via **Vite 5** — JSX, ES modules, hot reload
@@ -15,7 +15,7 @@ See `ninja-stats-project-plan.md` for the full phased roadmap. Current focus: **
 ## Design Principles
 - **Mobile-first** — design for small screens first (parents on the sideline), then scale up
 - **Clean and sporty** — bold typography, team colors, clear data layout
-- **Touch-optimized** — big tap targets for the upcoming live game logger
+- **Touch-optimized** — big tap targets; swipe-left on game history rows to reveal Edit/Delete
 - **Simple and well-commented** — this is a learning project; explain *what* and *why*
 - **Offline-friendly mindset** — Phase 3 will add PWA + offline support; avoid patterns that assume reliable network
 
@@ -38,20 +38,23 @@ soccer-stats/
 │   ├── App.jsx                   # Top-level component, owns shared state and data fetching
 │   ├── index.css                 # All styles, mobile-first
 │   └── components/
-│       ├── Confetti.jsx          # Celebration effect
-│       ├── GameHistory.jsx       # Past games list
-│       ├── GameLogger.jsx        # Live in-game event capture (Phase 1)
-│       ├── GameSetup.jsx         # Pre-game setup screen (Phase 1)
+│       ├── Confetti.jsx          # Celebration effect on win
+│       ├── GameHistory.jsx       # Past games list with swipe-to-edit/delete
+│       ├── GameLogger.jsx        # Live in-game event capture
+│       ├── GameSetup.jsx         # Pre-game date/opponent setup screen
 │       ├── GoalieStats.jsx       # Per-player goalie minutes + goals allowed
-│       ├── PixelPlayers.jsx      # Pixel-art player avatars
+│       ├── PixelPlayers.jsx      # Pixel-art player avatars (hidden in compact header)
 │       ├── Roster.jsx            # Team roster table
+│       ├── RosterEditor.jsx      # Add/edit/delete players (Manage Roster screen)
 │       ├── SeasonSummary.jsx     # Aggregate season totals
-│       └── StatsTable.jsx        # Per-player stat breakdown
+│       └── StatsTable.jsx        # Per-player stat breakdown for a selected game
+├── supabase/migrations/          # SQL migration files (run manually in Supabase SQL editor)
 ├── favicon.svg
 ├── robots.txt
-├── package.json                  # Dependencies + scripts (dev/build/preview)
-├── vite.config.js                # Vite config
-├── ninja-stats-project-plan.md   # Phased roadmap (read this for context)
+├── vercel.json                   # SPA rewrite rule (/* → /index.html)
+├── package.json
+├── vite.config.js
+├── ninja-stats-project-plan.md   # Phased roadmap
 ├── dist/                         # Build output (gitignored)
 └── node_modules/                 # gitignored
 ```
@@ -59,12 +62,34 @@ soccer-stats/
 ## Data
 - **Live data** comes from Supabase (PostgreSQL). Connection lives in the React app via `@supabase/supabase-js`.
 - **Schema:**
-  - `players`: `id` (int PK), `name` (text), `number` (int)
-  - `games`: `id` (int PK), `date`, `opponent`, `team_score`, `opponent_score`
-  - `game_stats`: `id` (int PK), `game_id` (FK), `player_id` (FK), `goals`, `assists`, `minutes_in_goal` (default 0), `goals_allowed` (default 0)
+  - `teams`: `id`, `name`, `slug`, `season` — multi-team support
+  - `players`: `id` (int PK), `name` (text), `number` (int), `team_id` (FK)
+  - `games`: `id` (int PK), `date`, `opponent`, `team_score`, `opponent_score`, `notes`, `team_id` (FK)
+  - `game_stats`: `id` (int PK), `game_id` (FK), `player_id` (FK), `goals`, `assists`, `shots_on_goal`, `tackles`, `saves`, `minutes_in_goal` (default 0), `goals_allowed` (default 0)
 - **Important:** Jersey `number` ≠ player `id`. Always join through `id` for relationships, display by `number` and `name`.
 - **Roster:** 13 players (IDs 1–13). Team name is always "Ninjas." Notable spellings: **Hailey** (ID 8), **Eleanora** (ID 1), **Eliana** (formerly "Ellie").
-- **Future schema:** `game_events` table coming in Phase 2 (raw timestamped events from the live logger).
+- **RLS policies** are enabled. Migrations for INSERT/UPDATE/DELETE policies on `players`, `game_stats`, and `games` are in `supabase/migrations/`.
+- **Migrations** are run manually in the Supabase SQL Editor — there is no CLI migration runner set up.
+
+## Game Logger (Phase 1 — complete)
+- **Event types:** Goal, Assist, Shot on Goal, Tackle, Save, Goal Allowed
+- **Flow:** GameSetup (date + opponent) → GameLogger (log events) → Confirm screen (review + save)
+- **New game:** events held in React state + localStorage draft for crash recovery
+- **Edit game:** pre-populated from existing `game_stats`; no localStorage draft
+- **Save:** INSERT or UPDATE `games` → DELETE + re-INSERT `game_stats`
+- **Timer:** live MM:SS game clock on the logger screen with play/pause/reset controls
+- **Game notes:** entered on the logging screen, saved to `games.notes`
+
+## Dashboard UX
+- **Game History rows:** swipe left to reveal Edit and Delete buttons
+- **Tap a game row** to select it — Game Stats section updates to show that game's stats
+- **Selected row** highlighted with dark red background + red left border
+- **Season Totals table** shows: Goals, Assists, Shots, Tackles, Saves — horizontally scrollable on mobile
+- **Game Stats table** shows the same columns for the selected game
+
+## Header behavior
+- **Dashboard:** full header with pixel player graphics and team switcher dropdown
+- **Logger / GameSetup / RosterEditor:** compact header (smaller text, no pixel players, no team switcher) to maximize screen space for actions
 
 ## Common Commands
 - `npm run dev` — start the local Vite dev server
