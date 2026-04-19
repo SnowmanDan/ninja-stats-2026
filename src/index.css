@@ -642,7 +642,7 @@ tbody tr:hover {
 
 .timer-btn-play     { background: #2e7d32; color: #fff; }
 .timer-btn-pause    { background: #e65100; color: #fff; }
-.timer-btn-halftime { background: #1565c0; color: #fff; font-size: 0.75rem; letter-spacing: 0.5px; }
+
 .timer-btn-reset    { background: var(--bg-card-alt); color: var(--text-muted); }
 
 /* ===== 15. GAME LOGGER — PLAYER GRID ============================

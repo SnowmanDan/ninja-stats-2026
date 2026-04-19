@@ -388,7 +388,7 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
           ) : (
             <button className="timer-btn timer-btn-pause" onClick={pauseTimer} aria-label="Pause">⏸</button>
           )}
-          <button className="timer-btn timer-btn-halftime" onClick={pauseTimer} aria-label="Half time">HT</button>
+
           <button className="timer-btn timer-btn-reset" onClick={resetTimer} aria-label="Reset">↺</button>
         </div>
       </div>
