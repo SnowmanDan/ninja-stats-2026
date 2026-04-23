@@ -117,6 +117,9 @@ Vite exposes these to the app via `import.meta.env.VITE_*`.
 - `dev` → auto-deploys to Vercel Preview (dev Supabase)
 - Feature work happens on `dev`, merged to `main` when ready to ship
 
+**IMPORTANT — always push to `dev` first, not `main` directly.**
+Before committing any change, ask: "Is this a small typo/copy fix?" If yes, pushing straight to `main` is acceptable. For anything larger (new features, timer changes, UI changes, schema migrations), always commit to `dev`, verify on the Preview URL, then merge to `main`.
+
 ## Common Commands
 - `npm run dev` — start the local Vite dev server (uses `.env.development`)
 - `npm run build` — production build into `dist/` (uses `.env.production`)
