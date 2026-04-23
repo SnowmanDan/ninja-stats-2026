@@ -65,6 +65,10 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
   const [timerRunning, setTimerRunning] = useState(false)
   const timerRef = useRef(null)
 
+  /* Refs used for auto-scrolling between player grid and event buttons */
+  const playerSectionRef = useRef(null)
+  const eventSectionRef  = useRef(null)
+
   /* Clean up the interval if the component unmounts mid-game */
   useEffect(() => {
     return () => clearInterval(timerRef.current)
@@ -147,13 +151,24 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
   /* ---- Event handlers ----------------------------------------- */
 
   function handlePlayerSelect(player) {
-    setSelectedPlayer((prev) => (prev?.id === player.id ? null : player))
+    const isDeselecting = selectedPlayer?.id === player.id
+    setSelectedPlayer(isDeselecting ? null : player)
+    /* Scroll down to the event buttons so the coach can tap right away */
+    if (!isDeselecting) {
+      setTimeout(() => {
+        eventSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 0)
+    }
   }
 
   function handleEvent(type) {
     const id = nextId.current++
     setEvents((prev) => [...prev, { id, player: selectedPlayer, type }])
     setSelectedPlayer(null)
+    /* Scroll back up to the player grid so the next player can be selected */
+    setTimeout(() => {
+      playerSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 0)
   }
 
   function handleRemoveEvent(id) {
@@ -380,7 +395,7 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
       </div>
 
       {/* ── Player selector ──────────────────────────────────────── */}
-      <div className="card">
+      <div className="card" ref={playerSectionRef}>
         <h2 className="section-title">
           {selectedPlayer ? `Selected: ${selectedPlayer.name}` : 'Select Player'}
         </h2>
@@ -403,7 +418,7 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
 
       {/* ── Event buttons (only shown when a player is selected) ─── */}
       {selectedPlayer && (
-        <div className="card">
+        <div className="card" ref={eventSectionRef}>
           <h2 className="section-title">Log Event — {selectedPlayer.name}</h2>
           <div className="event-btn-grid">
             {EVENT_TYPES.map((type) => (
