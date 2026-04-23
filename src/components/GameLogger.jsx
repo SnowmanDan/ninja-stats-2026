@@ -61,13 +61,24 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
 
   /* ---- Timer state -------------------------------------------- */
 
-  const [timerSeconds, setTimerSeconds] = useState(0)
+  const [halfLength,   setHalfLength]   = useState(25)   // minutes per half
+  const [timerSeconds, setTimerSeconds] = useState(25*60) // counts down
   const [timerRunning, setTimerRunning] = useState(false)
+  const [half,         setHalf]         = useState(1)     // 1 or 2
+  const [isHalftime,   setIsHalftime]   = useState(false)
+  const [gameStarted,  setGameStarted]  = useState(false) // locks the half-length picker
+
   const timerRef = useRef(null)
+  const halfRef  = useRef(1) // ref so the interval callback always sees the current half
 
   /* Refs used for auto-scrolling between player grid and event buttons */
   const playerSectionRef = useRef(null)
   const eventSectionRef  = useRef(null)
+
+  /* When the coach changes the half length before the game starts, reset the clock */
+  useEffect(() => {
+    if (!gameStarted) setTimerSeconds(halfLength * 60)
+  }, [halfLength])
 
   /* Clean up the interval if the component unmounts mid-game */
   useEffect(() => {
@@ -77,8 +88,18 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
   function startTimer() {
     if (timerRunning) return
     setTimerRunning(true)
+    setGameStarted(true)
     timerRef.current = setInterval(() => {
-      setTimerSeconds((s) => s + 1)
+      setTimerSeconds((s) => {
+        if (s <= 1) {
+          /* Time is up for this half — pause and show halftime if 1st half */
+          clearInterval(timerRef.current)
+          setTimerRunning(false)
+          if (halfRef.current === 1) setIsHalftime(true)
+          return 0
+        }
+        return s - 1
+      })
     }, 1000)
   }
 
@@ -90,7 +111,19 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
   function resetTimer() {
     clearInterval(timerRef.current)
     setTimerRunning(false)
-    setTimerSeconds(0)
+    setTimerSeconds(halfLength * 60)
+    setHalf(1)
+    halfRef.current = 1
+    setIsHalftime(false)
+    setGameStarted(false)
+  }
+
+  /* Called when the coach taps "Start 2nd Half" — resets clock for half 2 */
+  function startSecondHalf() {
+    setIsHalftime(false)
+    setHalf(2)
+    halfRef.current = 2
+    setTimerSeconds(halfLength * 60)
   }
 
   /* ---- Logging state ------------------------------------------ */
@@ -382,16 +415,46 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
 
       {/* ── Game timer ───────────────────────────────────────────── */}
       <div className="card timer-card">
-        <span className="timer-display">{formatTime(timerSeconds)}</span>
-        <div className="timer-controls">
-          {!timerRunning ? (
-            <button className="timer-btn timer-btn-play" onClick={startTimer} aria-label="Play">▶</button>
-          ) : (
-            <button className="timer-btn timer-btn-pause" onClick={pauseTimer} aria-label="Pause">⏸</button>
-          )}
 
-          <button className="timer-btn timer-btn-reset" onClick={resetTimer} aria-label="Reset">↺</button>
+        {/* Main row: half label + clock + controls */}
+        <div className="timer-main-row">
+          <span className={`timer-half-label${isHalftime ? ' halftime' : ''}`}>
+            {isHalftime ? 'HALF TIME!' : `${half === 1 ? '1st' : '2nd'} Half`}
+          </span>
+          <span className="timer-display">{formatTime(timerSeconds)}</span>
+          {isHalftime ? (
+            /* Halftime: single button to start 2nd half */
+            <button className="timer-btn timer-btn-second-half" onClick={startSecondHalf}>
+              2nd Half
+            </button>
+          ) : (
+            <div className="timer-controls">
+              {!timerRunning ? (
+                <button className="timer-btn timer-btn-play" onClick={startTimer} aria-label="Play">▶</button>
+              ) : (
+                <button className="timer-btn timer-btn-pause" onClick={pauseTimer} aria-label="Pause">⏸</button>
+              )}
+              <button className="timer-btn timer-btn-reset" onClick={resetTimer} aria-label="Reset">↺</button>
+            </div>
+          )}
         </div>
+
+        {/* Half-length picker — only visible before the game starts */}
+        {!gameStarted && (
+          <div className="timer-half-picker">
+            <span className="timer-half-picker-label">Half length:</span>
+            {[15, 20, 25, 30, 35, 40, 45].map((min) => (
+              <button
+                key={min}
+                className={`timer-half-opt${halfLength === min ? ' selected' : ''}`}
+                onClick={() => setHalfLength(min)}
+              >
+                {min}
+              </button>
+            ))}
+          </div>
+        )}
+
       </div>
 
       {/* ── Player selector ──────────────────────────────────────── */}

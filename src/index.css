@@ -607,10 +607,38 @@ tbody tr:hover {
 ================================================================= */
 .timer-card {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 10px;
   padding: 10px 14px;
   background: var(--red);
+}
+
+/* Row containing half label + clock + play/pause controls */
+.timer-main-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.timer-half-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255,255,255,0.75);
+  min-width: 52px;
+}
+
+/* "HALF TIME!" gets full white to stand out */
+.timer-half-label.halftime {
+  color: #fff;
+  font-size: 0.85rem;
+  animation: halftime-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes halftime-pulse {
+  from { opacity: 0.7; }
+  to   { opacity: 1;   }
 }
 
 .timer-display {
@@ -619,7 +647,7 @@ tbody tr:hover {
   font-variant-numeric: tabular-nums;
   letter-spacing: 3px;
   color: var(--white);
-  flex: 1; /* push controls to the right */
+  flex: 1;
 }
 
 .timer-controls {
@@ -640,10 +668,44 @@ tbody tr:hover {
   justify-content: center;
 }
 
-.timer-btn-play     { background: #2e7d32; color: #fff; }
-.timer-btn-pause    { background: #e65100; color: #fff; }
+.timer-btn-play        { background: #2e7d32; color: #fff; }
+.timer-btn-pause       { background: #e65100; color: #fff; }
+.timer-btn-reset       { background: var(--bg-card-alt); color: var(--text-muted); }
+.timer-btn-second-half { background: #2e7d32; color: #fff; font-size: 0.75rem; width: auto; padding: 0 12px; }
 
-.timer-btn-reset    { background: var(--bg-card-alt); color: var(--text-muted); }
+/* Half-length picker — row of minute chips shown before game starts */
+.timer-half-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.timer-half-picker-label {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 2px;
+}
+
+.timer-half-opt {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.3);
+  background: transparent;
+  color: rgba(255,255,255,0.7);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-width: 36px;
+}
+
+.timer-half-opt.selected {
+  background: rgba(255,255,255,0.25);
+  border-color: #fff;
+  color: #fff;
+}
 
 /* ===== 15. GAME LOGGER — PLAYER GRID ============================
    3-column grid of large tap-target buttons.
