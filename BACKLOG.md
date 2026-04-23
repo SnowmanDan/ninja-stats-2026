@@ -25,6 +25,7 @@ _Nothing in progress — pick something from Up Next!_
 - Timestamps on game events (Phase 2 — `game_events` table)
 - Substitution tracking
 - Player position tracking
+- Add photo to game logger (Supabase Storage bucket, `photo_url` on `games` table, camera capture on mobile, display in game history)
 
 ---
 
