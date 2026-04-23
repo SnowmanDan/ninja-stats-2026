@@ -19,6 +19,19 @@ Set up separate Supabase projects for dev and production so changes can be teste
 
 ## Up Next
 
+### From Jira (SS-2 through SS-18)
+- **SS-2** — Add metadata field to differentiate between seasons
+- **SS-3** — Skins: ESPN, Popcorn, Mario, KPOP (theme switcher)
+- **SS-9** — When player name selected on logging screen, auto scroll down to event buttons
+- **SS-10** — Add guide for event logging
+- **SS-11** — Add welcome guide for new users
+- **SS-12** — Move back to previous screen after selecting event; move to score
+- **SS-15** — Add place for photo of field or team from the day
+- **SS-16** — Increase brightness of name font in event logger
+- **SS-17** — Make timer a countdown where you can enter length (e.g. 50 min)
+- **SS-18** — Maybe select which players are present before logging starts
+
+### Other
 - PWA / offline support (Phase 3)
 - Timestamps on game events (Phase 2 — `game_events` table)
 - Substitution tracking
