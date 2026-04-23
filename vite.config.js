@@ -12,7 +12,6 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      selfDestroying: true, // temporarily disabled for debugging
       registerType: 'autoUpdate', // automatically update the service worker when a new version deploys
       manifest: {
         name: 'Ninja Stats',
@@ -40,6 +39,14 @@ export default defineConfig({
       workbox: {
         // Cache the app shell (HTML, JS, CSS) so it loads fast and works offline
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        // Never cache Supabase API calls — always fetch live data from the network
+        navigateFallbackDenylist: [/^\/rest\//, /^\/auth\//],
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.hostname.includes('supabase.co'),
+            handler: 'NetworkOnly',
+          },
+        ],
       },
     }),
   ],
