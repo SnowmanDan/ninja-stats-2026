@@ -187,6 +187,45 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [showEventGuide,   setShowEventGuide]   = useState(false)
 
+  /* ---- Photo state -------------------------------------------- */
+
+  /*
+    photoUrl — the public Supabase Storage URL saved to the DB on save.
+    photoPreview — a local object URL shown immediately after selection (no network needed).
+    photoUploading — true while the file is being uploaded to Storage.
+    In edit mode we seed photoUrl from game.initialPhotoUrl so existing photos are preserved.
+  */
+  const [photoUrl,       setPhotoUrl]       = useState(isEditMode ? (game.initialPhotoUrl ?? null) : null)
+  const [photoPreview,   setPhotoPreview]   = useState(isEditMode ? (game.initialPhotoUrl ?? null) : null)
+  const [photoUploading, setPhotoUploading] = useState(false)
+  const photoInputRef = useRef(null)
+
+  async function handlePhotoSelect(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    /* Show a local preview instantly — no waiting for the upload */
+    setPhotoPreview(URL.createObjectURL(file))
+    setPhotoUploading(true)
+
+    /* Upload to Supabase Storage. teamId scopes photos by team. */
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+    const filename = `${teamId}/${Date.now()}-${safeName}`
+    const { error: uploadError } = await db.storage
+      .from('game-photos')
+      .upload(filename, file, { upsert: true })
+
+    if (uploadError) {
+      console.error('Photo upload error:', uploadError)
+      setPhotoUploading(false)
+      return
+    }
+
+    const { data: urlData } = db.storage.from('game-photos').getPublicUrl(filename)
+    setPhotoUrl(urlData.publicUrl)
+    setPhotoUploading(false)
+  }
+
   /* ---- Derived scores ----------------------------------------- */
 
   const ninjasScore   = events.filter((e) => e.type === 'Goal').length
@@ -250,6 +289,7 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
           team_score:     ninjasScore,
           opponent_score: opponentScore,
           notes:          notes.trim() || null,
+          photo_url:      photoUrl,
         })
         .eq('id', game.id)
 
@@ -315,6 +355,7 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
           team_score:     ninjasScore,
           opponent_score: opponentScore,
           notes:          notes.trim() || null,
+          photo_url:      photoUrl,
           team_id:        teamId,
         })
         .select()
@@ -538,7 +579,7 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
         </div>
       )}
 
-      {/* ── Game notes ───────────────────────────────────────────── */}
+      {/* ── Game notes + photo ───────────────────────────────────── */}
       <div className="card">
         <label className="form-label" htmlFor="game-notes">Game Notes (optional)</label>
         <textarea
@@ -549,6 +590,37 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
           onChange={(e) => setNotes(e.target.value)}
           rows={3}
         />
+
+        {/* Hidden file input — triggered by the button below */}
+        <input
+          ref={photoInputRef}
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={handlePhotoSelect}
+        />
+
+        {/* Photo preview or Add Photo button */}
+        {photoPreview ? (
+          <div className="photo-preview-wrap">
+            <img src={photoPreview} alt="Game photo preview" className="photo-preview" />
+            {photoUploading && <p className="photo-status">Uploading…</p>}
+            <button
+              className="btn btn-ghost photo-change-btn"
+              onClick={() => photoInputRef.current?.click()}
+              disabled={photoUploading}
+            >
+              Change Photo
+            </button>
+          </div>
+        ) : (
+          <button
+            className="btn btn-ghost photo-add-btn"
+            onClick={() => photoInputRef.current?.click()}
+          >
+            📷 Add Photo
+          </button>
+        )}
       </div>
 
       {/* ── Event guide ──────────────────────────────────────────── */}

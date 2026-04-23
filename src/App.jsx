@@ -204,7 +204,7 @@ function App() {
           .order('number'),
 
         db.from('games')
-          .select('id, date, opponent, team_score, opponent_score, notes')
+          .select('id, date, opponent, team_score, opponent_score, notes, photo_url')
           .eq('team_id', currentTeam.id)
           .order('date', { ascending: false })
           .order('id',   { ascending: false }),  /* tiebreak: most recently logged first */
@@ -286,11 +286,12 @@ function App() {
     })
 
     setActiveGame({
-      id:            game.id,
-      date:          game.date,
-      opponent:      game.opponent,
+      id:               game.id,
+      date:             game.date,
+      opponent:         game.opponent,
       initialEvents,
-      initialNotes:  game.notes || '',
+      initialNotes:     game.notes     || '',
+      initialPhotoUrl:  game.photo_url || null,
     })
     setView('setup')  /* go through date/opponent screen before the logger */
   }
@@ -439,7 +440,8 @@ function App() {
     opponent:      g.opponent,
     teamScore:     g.team_score,
     opponentScore: g.opponent_score,
-    notes:         g.notes || '',
+    notes:         g.notes     || '',
+    photoUrl:      g.photo_url || null,
   }))
 
   // -- Per-game stats: show the selected game, defaulting to the most recent --

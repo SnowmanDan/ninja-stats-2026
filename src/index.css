@@ -707,6 +707,72 @@ tbody tr:hover {
   color: #fff;
 }
 
+/* ===== 15a. GAME LOGGER — PHOTO ================================
+   Photo picker inside the notes card + preview display.
+================================================================= */
+.photo-add-btn {
+  margin-top: 10px;
+  width: 100%;
+}
+
+.photo-preview-wrap {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.photo-preview {
+  width: 100%;
+  border-radius: 8px;
+  object-fit: cover;
+  max-height: 240px;
+}
+
+.photo-status {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 0;
+}
+
+.photo-change-btn {
+  align-self: flex-start;
+}
+
+/* Photo icon button in game history rows */
+.gh-photo-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0 0 0 4px;
+  line-height: 1;
+  vertical-align: middle;
+  opacity: 0.7;
+}
+
+.gh-photo-btn:hover { opacity: 1; }
+
+/* Photo modal */
+.gh-photo-modal {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 360px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gh-photo-modal-img {
+  width: 100%;
+  border-radius: 8px;
+  object-fit: cover;
+  max-height: 320px;
+}
+
 /* ===== 15b. GAME LOGGER — EVENT GUIDE ===========================
    Collapsible glossary of event definitions at the bottom of the
    logging screen. Toggle button reveals a definition list.
