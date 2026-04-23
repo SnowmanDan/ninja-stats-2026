@@ -25,8 +25,18 @@
 
 import { useState, useEffect, useRef } from 'react'
 
-/* The five things a coach can log for a player */
+/* The six events a coach can log for a player */
 const EVENT_TYPES = ['Goal', 'Assist', 'Shot on Goal', 'Tackle', 'Save', 'Goal Allowed']
+
+/* Definitions shown in the collapsible Event Guide at the bottom of the screen */
+const EVENT_DEFINITIONS = [
+  { type: 'Goal',         def: 'The ball crosses the opponent\'s goal line. Credited to the player who kicked it in.' },
+  { type: 'Assist',       def: 'A pass or touch that directly led to a goal. The player who set up the scorer gets the assist.' },
+  { type: 'Shot on Goal', def: 'Any shot that would have gone in if the goalie hadn\'t stopped it. Does not include shots that miss wide or go over.' },
+  { type: 'Tackle',       def: 'Successfully taking the ball away from an opponent. The defending player who wins the ball gets the tackle.' },
+  { type: 'Save',         def: 'The goalie stops a shot that would have gone in. Only the goalie gets saves.' },
+  { type: 'Goal Allowed', def: 'The opponent scores. Credited to the goalie who was in net when the goal happened.' },
+]
 
 /* ---- localStorage draft helpers --------------------------------
    Only used for new games — edits aren't drafted to localStorage.
@@ -175,6 +185,7 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
   /* ---- Cancel state ------------------------------------------- */
 
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [showEventGuide,   setShowEventGuide]   = useState(false)
 
   /* ---- Derived scores ----------------------------------------- */
 
@@ -538,6 +549,27 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
           onChange={(e) => setNotes(e.target.value)}
           rows={3}
         />
+      </div>
+
+      {/* ── Event guide ──────────────────────────────────────────── */}
+      <div className="card event-guide-card">
+        <button
+          className="event-guide-toggle"
+          onClick={() => setShowEventGuide((v) => !v)}
+        >
+          <span>Event Guide</span>
+          <span className="event-guide-chevron">{showEventGuide ? '▲' : '▼'}</span>
+        </button>
+        {showEventGuide && (
+          <dl className="event-guide-list">
+            {EVENT_DEFINITIONS.map(({ type, def }) => (
+              <div key={type} className="event-guide-item">
+                <dt className="event-guide-term">{type}</dt>
+                <dd className="event-guide-def">{def}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
       </div>
 
       {/* ── Cancel / Discard confirmation ────────────────────────── */}
