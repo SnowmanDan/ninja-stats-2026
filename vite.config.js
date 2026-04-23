@@ -12,6 +12,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      selfDestroying: true, // temporarily disabled for debugging
       registerType: 'autoUpdate', // automatically update the service worker when a new version deploys
       manifest: {
         name: 'Ninja Stats',
