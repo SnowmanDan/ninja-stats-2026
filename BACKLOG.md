@@ -2,18 +2,7 @@
 
 ## In Progress
 
-### Dev/Prod Supabase Environment Setup
-Set up separate Supabase projects for dev and production so changes can be tested safely before going live.
-- [x] Move Supabase credentials out of App.jsx into environment variables
-- [x] Add .env.development and .env.production to .gitignore
-- [x] Create .env.example template committed to git
-- [x] Update App.jsx to read from import.meta.env
-- [x] Update CLAUDE.md to document the workflow
-- [ ] Create dev Supabase project at supabase.com
-- [ ] Fill in .env.development with dev project credentials
-- [ ] Set Vercel environment variables for Production and Preview
-- [ ] Run migrations on dev Supabase project to match prod schema
-- [ ] Create `dev` git branch for ongoing development
+_Nothing in progress — pick something from Up Next!_
 
 ---
 
@@ -32,7 +21,7 @@ Set up separate Supabase projects for dev and production so changes can be teste
 - **SS-18** — Maybe select which players are present before logging starts
 
 ### Other
-- PWA / offline support (Phase 3)
+- PWA offline support (Phase 3 — offline event queue, IndexedDB)
 - Timestamps on game events (Phase 2 — `game_events` table)
 - Substitution tracking
 - Player position tracking
@@ -51,3 +40,6 @@ Set up separate Supabase projects for dev and production so changes can be teste
 - Game timer with play/pause/reset
 - Compact header on logger and roster screens
 - Game notes on logging screen
+- Dev/prod Supabase environment setup (separate projects, env vars, Vercel Preview vs Production)
+- PWA — installable via "Add to Home Screen", service worker caching, app icon
+- Cloud dev workflow: edit on GitHub with Copilot → push to `dev` → test Preview URL → merge to `main`
