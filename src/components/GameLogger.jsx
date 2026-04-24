@@ -682,8 +682,9 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
         <button
           className="btn btn-end-game"
           onClick={() => setPhase('confirm')}
+          disabled={photoUploading}
         >
-          {isEditMode ? 'Review Changes' : 'End Game'}
+          {photoUploading ? 'Uploading photo…' : isEditMode ? 'Review Changes' : 'End Game'}
         </button>
         <button
           className="btn btn-cancel-game"
