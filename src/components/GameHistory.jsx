@@ -41,14 +41,13 @@ function formatDate(dateStr) {
 
 export default function GameHistory({ games: gamesProp, db, onDelete, onEdit, onSelectGame, selectedGameId }) {
   /*
-    localGames — initialized from the prop once at mount.
-    We manage it locally so a successful delete removes the row instantly
-    without waiting for the parent to refetch.
-
-    Note: we intentionally don't sync from the prop via useEffect because
-    syncing would overwrite local deletions whenever App re-renders.
+    Instead of copying games into local state (which would stop syncing
+    when the parent re-fetches), we track only the IDs of locally deleted
+    rows. The displayed list is always derived from the latest prop data,
+    minus any rows the user just deleted.
   */
-  const [localGames,   setLocalGames]   = useState(gamesProp)
+  const [deletedIds, setDeletedIds] = useState(new Set())
+  const localGames = gamesProp.filter((g) => !deletedIds.has(g.id))
   const [openId,       setOpenIdState]  = useState(null)   /* id of the currently swiped-open row */
   const openIdRef = useRef(null)  /* mirrors openId but readable synchronously in click handlers */
 
@@ -210,7 +209,7 @@ export default function GameHistory({ games: gamesProp, db, onDelete, onEdit, on
       Success. Remove from local state immediately.
       ON DELETE CASCADE on game_stats.game_id handles child row cleanup.
     */
-    setLocalGames((prev) => prev.filter((g) => g.id !== confirmGame.id))
+    setDeletedIds((prev) => new Set([...prev, confirmGame.id]))
     onDelete?.(confirmGame.id)
     setOpenId(null)
     setConfirmGame(null)

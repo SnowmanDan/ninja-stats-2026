@@ -25,8 +25,18 @@
 
 import { useState, useEffect, useRef } from 'react'
 
-/* The five things a coach can log for a player */
+/* The six events a coach can log for a player */
 const EVENT_TYPES = ['Goal', 'Assist', 'Shot on Goal', 'Tackle', 'Save', 'Goal Allowed']
+
+/* Definitions shown in the collapsible Event Guide at the bottom of the screen */
+const EVENT_DEFINITIONS = [
+  { type: 'Goal',         def: 'The ball crosses the opponent\'s goal line. Credited to the player who kicked it in.' },
+  { type: 'Assist',       def: 'A pass or touch that directly led to a goal. The player who set up the scorer gets the assist.' },
+  { type: 'Shot on Goal', def: 'Any shot that would have gone in if the goalie hadn\'t stopped it. Does not include shots that miss wide or go over.' },
+  { type: 'Tackle',       def: 'Successfully taking the ball away from an opponent. The defending player who wins the ball gets the tackle.' },
+  { type: 'Save',         def: 'The goalie stops a shot that would have gone in. Only the goalie gets saves.' },
+  { type: 'Goal Allowed', def: 'The opponent scores. Credited to the goalie who was in net when the goal happened.' },
+]
 
 /* ---- localStorage draft helpers --------------------------------
    Only used for new games — edits aren't drafted to localStorage.
@@ -61,9 +71,24 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
 
   /* ---- Timer state -------------------------------------------- */
 
-  const [timerSeconds, setTimerSeconds] = useState(0)
+  const [halfLength,   setHalfLength]   = useState(25)   // minutes per half
+  const [timerSeconds, setTimerSeconds] = useState(25*60) // counts down
   const [timerRunning, setTimerRunning] = useState(false)
+  const [half,         setHalf]         = useState(1)     // 1 or 2
+  const [isHalftime,   setIsHalftime]   = useState(false)
+  const [gameStarted,  setGameStarted]  = useState(false) // locks the half-length picker
+
   const timerRef = useRef(null)
+  const halfRef  = useRef(1) // ref so the interval callback always sees the current half
+
+  /* Refs used for auto-scrolling between player grid and event buttons */
+  const playerSectionRef = useRef(null)
+  const eventSectionRef  = useRef(null)
+
+  /* When the coach changes the half length before the game starts, reset the clock */
+  useEffect(() => {
+    if (!gameStarted) setTimerSeconds(halfLength * 60)
+  }, [halfLength])
 
   /* Clean up the interval if the component unmounts mid-game */
   useEffect(() => {
@@ -73,8 +98,18 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
   function startTimer() {
     if (timerRunning) return
     setTimerRunning(true)
+    setGameStarted(true)
     timerRef.current = setInterval(() => {
-      setTimerSeconds((s) => s + 1)
+      setTimerSeconds((s) => {
+        if (s <= 1) {
+          /* Time is up for this half — pause and show halftime if 1st half */
+          clearInterval(timerRef.current)
+          setTimerRunning(false)
+          if (halfRef.current === 1) setIsHalftime(true)
+          return 0
+        }
+        return s - 1
+      })
     }, 1000)
   }
 
@@ -86,7 +121,19 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
   function resetTimer() {
     clearInterval(timerRef.current)
     setTimerRunning(false)
-    setTimerSeconds(0)
+    setTimerSeconds(halfLength * 60)
+    setHalf(1)
+    halfRef.current = 1
+    setIsHalftime(false)
+    setGameStarted(false)
+  }
+
+  /* Called when the coach taps "Start 2nd Half" — resets clock for half 2 */
+  function startSecondHalf() {
+    setIsHalftime(false)
+    setHalf(2)
+    halfRef.current = 2
+    setTimerSeconds(halfLength * 60)
   }
 
   /* ---- Logging state ------------------------------------------ */
@@ -138,6 +185,53 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
   /* ---- Cancel state ------------------------------------------- */
 
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [showEventGuide,   setShowEventGuide]   = useState(false)
+
+  /* ---- Photo state -------------------------------------------- */
+
+  /*
+    photoUrl — the public Supabase Storage URL saved to the DB on save.
+    photoPreview — a local object URL shown immediately after selection (no network needed).
+    photoUploading — true while the file is being uploaded to Storage.
+    In edit mode we seed photoUrl from game.initialPhotoUrl so existing photos are preserved.
+  */
+  const [photoUrl,       setPhotoUrl]       = useState(isEditMode ? (game.initialPhotoUrl ?? null) : null)
+  const [photoPreview,   setPhotoPreview]   = useState(isEditMode ? (game.initialPhotoUrl ?? null) : null)
+  const [photoUploading, setPhotoUploading] = useState(false)
+  const photoInputRef = useRef(null)
+  /*
+    photoUrlRef mirrors photoUrl so handleSave always reads the latest
+    value even if React hasn't re-rendered yet since the upload completed.
+  */
+  const photoUrlRef = useRef(isEditMode ? (game.initialPhotoUrl ?? null) : null)
+
+  async function handlePhotoSelect(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    /* Show a local preview instantly — no waiting for the upload */
+    setPhotoPreview(URL.createObjectURL(file))
+    setPhotoUploading(true)
+
+    /* Upload to Supabase Storage. teamId scopes photos by team. */
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+    const filename = `${teamId}/${Date.now()}-${safeName}`
+    const { error: uploadError } = await db.storage
+      .from('game-photos')
+      .upload(filename, file, { upsert: true })
+
+    if (uploadError) {
+      console.error('Photo upload error:', uploadError)
+      setPhotoUploading(false)
+      return
+    }
+
+    const { data: urlData } = db.storage.from('game-photos').getPublicUrl(filename)
+    photoUrlRef.current = urlData.publicUrl
+    setPhotoUrl(urlData.publicUrl)
+    setPhotoUploading(false)
+    console.log('[Photo] Upload complete, URL:', urlData.publicUrl)
+  }
 
   /* ---- Derived scores ----------------------------------------- */
 
@@ -147,13 +241,24 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
   /* ---- Event handlers ----------------------------------------- */
 
   function handlePlayerSelect(player) {
-    setSelectedPlayer((prev) => (prev?.id === player.id ? null : player))
+    const isDeselecting = selectedPlayer?.id === player.id
+    setSelectedPlayer(isDeselecting ? null : player)
+    /* Scroll down to the event buttons so the coach can tap right away */
+    if (!isDeselecting) {
+      setTimeout(() => {
+        eventSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 0)
+    }
   }
 
   function handleEvent(type) {
     const id = nextId.current++
     setEvents((prev) => [...prev, { id, player: selectedPlayer, type }])
     setSelectedPlayer(null)
+    /* Scroll back up to the player grid so the next player can be selected */
+    setTimeout(() => {
+      playerSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 0)
   }
 
   function handleRemoveEvent(id) {
@@ -163,6 +268,7 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
   /* ---- Save --------------------------------------------------- */
 
   async function handleSave() {
+    console.log('[Save] photoUrlRef.current:', photoUrlRef.current)
     setSaving(true)
     setSaveError(null)
 
@@ -191,6 +297,7 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
           team_score:     ninjasScore,
           opponent_score: opponentScore,
           notes:          notes.trim() || null,
+          photo_url:      photoUrlRef.current,
         })
         .eq('id', game.id)
 
@@ -256,6 +363,7 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
           team_score:     ninjasScore,
           opponent_score: opponentScore,
           notes:          notes.trim() || null,
+          photo_url:      photoUrlRef.current,
           team_id:        teamId,
         })
         .select()
@@ -267,6 +375,8 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
         setSaving(false)
         return
       }
+
+      console.log('[Save] savedGame from Supabase:', savedGame)
 
       const statsRows = Object.entries(statsByPlayer).map(([player_id, stats]) => ({
         game_id:   savedGame.id,
@@ -367,20 +477,50 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
 
       {/* ── Game timer ───────────────────────────────────────────── */}
       <div className="card timer-card">
-        <span className="timer-display">{formatTime(timerSeconds)}</span>
-        <div className="timer-controls">
-          {!timerRunning ? (
-            <button className="timer-btn timer-btn-play" onClick={startTimer} aria-label="Play">▶</button>
-          ) : (
-            <button className="timer-btn timer-btn-pause" onClick={pauseTimer} aria-label="Pause">⏸</button>
-          )}
 
-          <button className="timer-btn timer-btn-reset" onClick={resetTimer} aria-label="Reset">↺</button>
+        {/* Main row: half label + clock + controls */}
+        <div className="timer-main-row">
+          <span className={`timer-half-label${isHalftime ? ' halftime' : ''}`}>
+            {isHalftime ? 'HALF TIME!' : `${half === 1 ? '1st' : '2nd'} Half`}
+          </span>
+          <span className="timer-display">{formatTime(timerSeconds)}</span>
+          {isHalftime ? (
+            /* Halftime: single button to start 2nd half */
+            <button className="timer-btn timer-btn-second-half" onClick={startSecondHalf}>
+              2nd Half
+            </button>
+          ) : (
+            <div className="timer-controls">
+              {!timerRunning ? (
+                <button className="timer-btn timer-btn-play" onClick={startTimer} aria-label="Play">▶</button>
+              ) : (
+                <button className="timer-btn timer-btn-pause" onClick={pauseTimer} aria-label="Pause">⏸</button>
+              )}
+              <button className="timer-btn timer-btn-reset" onClick={resetTimer} aria-label="Reset">↺</button>
+            </div>
+          )}
         </div>
+
+        {/* Half-length picker — only visible before the game starts */}
+        {!gameStarted && (
+          <div className="timer-half-picker">
+            <span className="timer-half-picker-label">Half length:</span>
+            {[15, 20, 25, 30, 35, 40, 45].map((min) => (
+              <button
+                key={min}
+                className={`timer-half-opt${halfLength === min ? ' selected' : ''}`}
+                onClick={() => setHalfLength(min)}
+              >
+                {min}
+              </button>
+            ))}
+          </div>
+        )}
+
       </div>
 
       {/* ── Player selector ──────────────────────────────────────── */}
-      <div className="card">
+      <div className="card" ref={playerSectionRef}>
         <h2 className="section-title">
           {selectedPlayer ? `Selected: ${selectedPlayer.name}` : 'Select Player'}
         </h2>
@@ -403,7 +543,7 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
 
       {/* ── Event buttons (only shown when a player is selected) ─── */}
       {selectedPlayer && (
-        <div className="card">
+        <div className="card" ref={eventSectionRef}>
           <h2 className="section-title">Log Event — {selectedPlayer.name}</h2>
           <div className="event-btn-grid">
             {EVENT_TYPES.map((type) => (
@@ -449,7 +589,7 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
         </div>
       )}
 
-      {/* ── Game notes ───────────────────────────────────────────── */}
+      {/* ── Game notes + photo ───────────────────────────────────── */}
       <div className="card">
         <label className="form-label" htmlFor="game-notes">Game Notes (optional)</label>
         <textarea
@@ -460,6 +600,58 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
           onChange={(e) => setNotes(e.target.value)}
           rows={3}
         />
+
+        {/* Hidden file input — triggered by the button below */}
+        <input
+          ref={photoInputRef}
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={handlePhotoSelect}
+        />
+
+        {/* Photo preview or Add Photo button */}
+        {photoPreview ? (
+          <div className="photo-preview-wrap">
+            <img src={photoPreview} alt="Game photo preview" className="photo-preview" />
+            {photoUploading && <p className="photo-status">Uploading…</p>}
+            <button
+              className="btn btn-ghost photo-change-btn"
+              onClick={() => photoInputRef.current?.click()}
+              disabled={photoUploading}
+            >
+              Change Photo
+            </button>
+          </div>
+        ) : (
+          <button
+            className="btn btn-ghost photo-add-btn"
+            onClick={() => photoInputRef.current?.click()}
+          >
+            📷 Add Photo
+          </button>
+        )}
+      </div>
+
+      {/* ── Event guide ──────────────────────────────────────────── */}
+      <div className="card event-guide-card">
+        <button
+          className="event-guide-toggle"
+          onClick={() => setShowEventGuide((v) => !v)}
+        >
+          <span>Event Guide</span>
+          <span className="event-guide-chevron">{showEventGuide ? '▲' : '▼'}</span>
+        </button>
+        {showEventGuide && (
+          <dl className="event-guide-list">
+            {EVENT_DEFINITIONS.map(({ type, def }) => (
+              <div key={type} className="event-guide-item">
+                <dt className="event-guide-term">{type}</dt>
+                <dd className="event-guide-def">{def}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
       </div>
 
       {/* ── Cancel / Discard confirmation ────────────────────────── */}
@@ -492,8 +684,9 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
         <button
           className="btn btn-end-game"
           onClick={() => setPhase('confirm')}
+          disabled={photoUploading}
         >
-          {isEditMode ? 'Review Changes' : 'End Game'}
+          {photoUploading ? 'Uploading photo…' : isEditMode ? 'Review Changes' : 'End Game'}
         </button>
         <button
           className="btn btn-cancel-game"

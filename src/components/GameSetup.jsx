@@ -66,6 +66,7 @@ export default function GameSetup({ onGameCreated, onCancel, initialDate, initia
             placeholder="e.g. Tigers"
             value={opponent}
             onChange={(e) => setOpponent(e.target.value)}
+            autoCapitalize="words"
             required
           />
         </div>

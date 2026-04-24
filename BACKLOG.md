@@ -2,24 +2,31 @@
 
 ## In Progress
 
-### Dev/Prod Supabase Environment Setup
-Set up separate Supabase projects for dev and production so changes can be tested safely before going live.
-- [x] Move Supabase credentials out of App.jsx into environment variables
-- [x] Add .env.development and .env.production to .gitignore
-- [x] Create .env.example template committed to git
-- [x] Update App.jsx to read from import.meta.env
-- [x] Update CLAUDE.md to document the workflow
-- [x] Create dev Supabase project at supabase.com
-- [x] Fill in .env.development with dev project credentials
-- [x] Set Vercel environment variables for Production and Preview
-- [x] Run migrations on dev Supabase project to match prod schema
-- [x] Create `dev` git branch for ongoing development
+_Nothing in progress — pick something from Up Next!_
 
 ---
 
 ## Up Next
 
-- PWA / offline support (Phase 3)
+### From Jira (SS-2 through SS-18)
+- **SS-2** — Add metadata field to differentiate between seasons
+- **SS-3** — Skins: ESPN, Popcorn, Mario, KPOP (theme switcher)
+- **SS-9** — When player name selected on logging screen, auto scroll down to event buttons
+- **SS-10** — Add guide for event logging
+- **SS-11** — Add welcome guide for new users
+- **SS-12** — Move back to previous screen after selecting event; move to score
+- **SS-15** — Add place for photo of field or team from the day
+- **SS-16** — Increase brightness of name font in event logger
+- **SS-17** — Make timer a countdown where you can enter length (e.g. 50 min)
+- **SS-18** — Maybe select which players are present before logging starts
+
+### Phase 4 — Auth (in progress)
+- Wire up `created_by` / `owner_id` — populate when user creates a game or team
+- Team creation flow — let a new user create their own team instead of seeding in SQL
+- Tighten RLS — replace wide-open `using (true)` with ownership checks against `team_members`
+
+### Other
+- PWA offline support (Phase 3 — offline event queue, IndexedDB)
 - Timestamps on game events (Phase 2 — `game_events` table)
 - Substitution tracking
 - Player position tracking
@@ -38,3 +45,9 @@ Set up separate Supabase projects for dev and production so changes can be teste
 - Game timer with play/pause/reset
 - Compact header on logger and roster screens
 - Game notes on logging screen
+- Dev/prod Supabase environment setup (separate projects, env vars, Vercel Preview vs Production)
+- PWA — installable via "Add to Home Screen", service worker caching, app icon
+- Cloud dev workflow: edit on GitHub with Copilot → push to `dev` → test Preview URL → merge to `main`
+- Add photo to game history (Supabase Storage, photo_url on games, camera capture, modal view)
+- Auth prep — created_at on all tables, team_members table, created_by/owner_id columns
+- Magic link sign-in (Phase 4 start) — Login screen, auth gate, sign-out button, authenticated RLS policies

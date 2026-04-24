@@ -607,10 +607,38 @@ tbody tr:hover {
 ================================================================= */
 .timer-card {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 10px;
   padding: 10px 14px;
   background: var(--red);
+}
+
+/* Row containing half label + clock + play/pause controls */
+.timer-main-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.timer-half-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255,255,255,0.75);
+  min-width: 52px;
+}
+
+/* "HALF TIME!" gets full white to stand out */
+.timer-half-label.halftime {
+  color: #fff;
+  font-size: 0.85rem;
+  animation: halftime-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes halftime-pulse {
+  from { opacity: 0.7; }
+  to   { opacity: 1;   }
 }
 
 .timer-display {
@@ -619,7 +647,7 @@ tbody tr:hover {
   font-variant-numeric: tabular-nums;
   letter-spacing: 3px;
   color: var(--white);
-  flex: 1; /* push controls to the right */
+  flex: 1;
 }
 
 .timer-controls {
@@ -640,10 +668,170 @@ tbody tr:hover {
   justify-content: center;
 }
 
-.timer-btn-play     { background: #2e7d32; color: #fff; }
-.timer-btn-pause    { background: #e65100; color: #fff; }
+.timer-btn-play        { background: #2e7d32; color: #fff; }
+.timer-btn-pause       { background: #e65100; color: #fff; }
+.timer-btn-reset       { background: var(--bg-card-alt); color: var(--text-muted); }
+.timer-btn-second-half { background: #2e7d32; color: #fff; font-size: 0.75rem; width: auto; padding: 0 12px; }
 
-.timer-btn-reset    { background: var(--bg-card-alt); color: var(--text-muted); }
+/* Half-length picker — row of minute chips shown before game starts */
+.timer-half-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.timer-half-picker-label {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 2px;
+}
+
+.timer-half-opt {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.3);
+  background: transparent;
+  color: rgba(255,255,255,0.7);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-width: 36px;
+}
+
+.timer-half-opt.selected {
+  background: rgba(255,255,255,0.25);
+  border-color: #fff;
+  color: #fff;
+}
+
+/* ===== 15a. GAME LOGGER — PHOTO ================================
+   Photo picker inside the notes card + preview display.
+================================================================= */
+.photo-add-btn {
+  margin-top: 10px;
+  width: 100%;
+}
+
+.photo-preview-wrap {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.photo-preview {
+  width: 100%;
+  border-radius: 8px;
+  object-fit: cover;
+  max-height: 240px;
+}
+
+.photo-status {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 0;
+}
+
+.photo-change-btn {
+  align-self: flex-start;
+}
+
+/* Photo icon button in game history rows */
+.gh-photo-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 0 0 5px;
+  line-height: 1;
+  vertical-align: middle;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+}
+
+.gh-photo-btn:hover { color: var(--white); }
+
+/* Photo modal */
+.gh-photo-modal {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 360px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gh-photo-modal-img {
+  width: 100%;
+  border-radius: 8px;
+  object-fit: cover;
+  max-height: 320px;
+}
+
+/* ===== 15b. GAME LOGGER — EVENT GUIDE ===========================
+   Collapsible glossary of event definitions at the bottom of the
+   logging screen. Toggle button reveals a definition list.
+================================================================= */
+.event-guide-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.event-guide-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.event-guide-chevron {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.event-guide-list {
+  margin: 0;
+  padding: 0 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.event-guide-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.event-guide-term {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--red);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.event-guide-def {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin: 0;
+}
 
 /* ===== 15. GAME LOGGER — PLAYER GRID ============================
    3-column grid of large tap-target buttons.
@@ -1329,6 +1517,122 @@ footer {
   letter-spacing: 2px;
   text-transform: uppercase;
   color: var(--text-muted);
+}
+
+/* ===== 17. LOGIN SCREEN ========================================= */
+
+.login-card {
+  max-width: 400px;
+  margin: 32px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.login-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.login-subtitle {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.login-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.login-input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 1rem;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-input, #1a1a1a);
+  color: var(--text-primary);
+  box-sizing: border-box;
+}
+
+.login-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.login-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 1rem;
+}
+
+.login-error {
+  color: #e57373;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* Success state after sending the magic link */
+.login-success {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.login-success-icon {
+  font-size: 2.5rem;
+  margin: 0;
+}
+
+.login-success h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.login-success p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.login-hint {
+  font-size: 0.85rem !important;
+  font-style: italic;
+}
+
+/* ===== 18. SIGN OUT BUTTON ====================================== */
+
+.header-signout {
+  text-align: center;
+  padding: 4px 0 8px;
+}
+
+.signout-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  text-decoration: underline;
+  opacity: 0.6;
+}
+
+.signout-btn:hover {
+  opacity: 1;
 }
 
 /* ===== 12. RESPONSIVE: LARGER SCREENS ==========================

@@ -14,10 +14,16 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import { createClient } from '@supabase/supabase-js'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 
 import './index.css'
+
+/*
+  The Supabase client lives in src/supabase.js so it can be imported
+  by any component (Login, App, etc.) without recreating the connection.
+*/
+import { db } from './supabase'
+import Login from './components/Login'
 
 import Confetti      from './components/Confetti'
 import GameHistory   from './components/GameHistory'
@@ -30,32 +36,6 @@ import RosterEditor  from './components/RosterEditor'
 import SeasonSummary from './components/SeasonSummary'
 import StatsTable    from './components/StatsTable'
 import TeamSwitcher  from './components/TeamSwitcher'
-
-/* ================================================================
-   SUPABASE CLIENT
-   ----------------------------------------------------------------
-   createClient() sets up the connection to our Supabase project.
-   The anon key is the public-facing key — safe to expose in the
-   browser because Supabase's Row Level Security (RLS) controls
-   what it can actually access.
-
-   Credentials are read from environment variables so dev and prod
-   can point at different Supabase projects:
-     - Local dev:  .env.development  (gitignored)
-     - Local prod: .env.production   (gitignored)
-     - Vercel:     set in dashboard → Project Settings → Environment Variables
-
-   Find both values in: Supabase Dashboard → Project Settings → API
-================================================================ */
-const SUPABASE_URL      = import.meta.env.VITE_SUPABASE_URL
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-/*
-  createClient is called once, outside the component, so the same
-  client instance is reused across renders instead of being recreated
-  every time App re-renders.
-*/
-const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 /* ================================================================
    APP COMPONENT
@@ -71,6 +51,35 @@ function App() {
     returns { teamSlug: "ninjas" }.
   */
   const { teamSlug } = useParams()
+
+  /* ---- Auth state --------------------------------------------- */
+
+  /*
+    user       — the signed-in Supabase user object, or null if not logged in.
+    authLoaded — true once we've checked the session at least once.
+                 Prevents a flash of the login screen on page load while
+                 Supabase is still reading the stored session.
+  */
+  const [user,       setUser]       = useState(null)
+  const [authLoaded, setAuthLoaded] = useState(false)
+
+  useEffect(() => {
+    // Check for an existing session (e.g. returning visitor with stored token)
+    db.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+      setAuthLoaded(true)
+    })
+
+    // Listen for sign-in and sign-out events, including the magic link
+    // redirect — Supabase fires SIGNED_IN automatically when it detects
+    // the token in the URL after the user clicks their email link.
+    const { data: { subscription } } = db.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    // Clean up the listener when App unmounts
+    return () => subscription.unsubscribe()
+  }, [])
 
   /* ---- State -------------------------------------------------- */
 
@@ -204,7 +213,7 @@ function App() {
           .order('number'),
 
         db.from('games')
-          .select('id, date, opponent, team_score, opponent_score, notes')
+          .select('id, date, opponent, team_score, opponent_score, notes, photo_url')
           .eq('team_id', currentTeam.id)
           .order('date', { ascending: false })
           .order('id',   { ascending: false }),  /* tiebreak: most recently logged first */
@@ -286,11 +295,12 @@ function App() {
     })
 
     setActiveGame({
-      id:            game.id,
-      date:          game.date,
-      opponent:      game.opponent,
+      id:               game.id,
+      date:             game.date,
+      opponent:         game.opponent,
       initialEvents,
-      initialNotes:  game.notes || '',
+      initialNotes:     game.notes     || '',
+      initialPhotoUrl:  game.photo_url || null,
     })
     setView('setup')  /* go through date/opponent screen before the logger */
   }
@@ -321,6 +331,15 @@ function App() {
     setActiveGame(null)
     setRefreshKey((k) => k + 1)
   }
+
+  /* ---- Auth gate --------------------------------------------- */
+
+  // Still checking the stored session — show nothing to avoid a
+  // flash of the login screen for users who are already signed in.
+  if (!authLoaded) return null
+
+  // No session — show the login screen.
+  if (!user) return <Login db={db} />
 
   /* ---- Non-dashboard views ------------------------------------ */
 
@@ -439,7 +458,8 @@ function App() {
     opponent:      g.opponent,
     teamScore:     g.team_score,
     opponentScore: g.opponent_score,
-    notes:         g.notes || '',
+    notes:         g.notes     || '',
+    photoUrl:      g.photo_url || null,
   }))
 
   // -- Per-game stats: show the selected game, defaulting to the most recent --
@@ -576,6 +596,10 @@ function PageHeader({ team, teams, compact = false }) {
   const teamName  = team ? team.name   : '…'
   const season    = team ? team.season : ''
 
+  function handleSignOut() {
+    db.auth.signOut()
+  }
+
   return (
     <header className={compact ? 'header-compact' : ''}>
       <div className="header-inner">
@@ -595,6 +619,11 @@ function PageHeader({ team, teams, compact = false }) {
           pixel players. Hidden when there's only one team, and hidden
           in compact mode (logger/roster screens). */}
       {!compact && <TeamSwitcher teams={teams} currentSlug={team ? team.slug : ''} />}
+
+      {/* Sign-out link — subtle, tucked below the team switcher */}
+      <div className="header-signout">
+        <button className="signout-btn" onClick={handleSignOut}>Sign out</button>
+      </div>
     </header>
   )
 }

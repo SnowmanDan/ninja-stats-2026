@@ -62,10 +62,11 @@ soccer-stats/
 ## Data
 - **Live data** comes from Supabase (PostgreSQL). Connection lives in the React app via `@supabase/supabase-js`.
 - **Schema:**
-  - `teams`: `id`, `name`, `slug`, `season` — multi-team support
-  - `players`: `id` (int PK), `name` (text), `number` (int), `team_id` (FK)
-  - `games`: `id` (int PK), `date`, `opponent`, `team_score`, `opponent_score`, `notes`, `team_id` (FK)
-  - `game_stats`: `id` (int PK), `game_id` (FK), `player_id` (FK), `goals`, `assists`, `shots_on_goal`, `tackles`, `saves`, `minutes_in_goal` (default 0), `goals_allowed` (default 0)
+  - `teams`: `id`, `name`, `slug`, `season`, `owner_id` (uuid, FK to auth.users), `created_at` — multi-team support
+  - `players`: `id` (int PK), `name` (text), `number` (int), `team_id` (FK), `created_by` (uuid, FK to auth.users), `created_at`
+  - `games`: `id` (int PK), `date`, `opponent`, `team_score`, `opponent_score`, `notes`, `team_id` (FK), `created_by` (uuid, FK to auth.users), `created_at`
+  - `game_stats`: `id` (int PK), `game_id` (FK), `player_id` (FK), `goals`, `assists`, `shots_on_goal`, `tackles`, `saves`, `minutes_in_goal` (default 0), `goals_allowed` (default 0), `created_at`
+  - `team_members`: `id`, `user_id` (uuid, FK to auth.users), `team_id` (FK), `role` (text: 'coach' | 'parent' | 'viewer'), `created_at`
 - **Important:** Jersey `number` ≠ player `id`. Always join through `id` for relationships, display by `number` and `name`.
 - **Roster:** 13 players (IDs 1–13). Team name is always "Ninjas." Notable spellings: **Hailey** (ID 8), **Eleanora** (ID 1), **Eliana** (formerly "Ellie").
 - **RLS policies** are enabled. Migrations for INSERT/UPDATE/DELETE policies on `players`, `game_stats`, and `games` are in `supabase/migrations/`.
@@ -116,6 +117,9 @@ Vite exposes these to the app via `import.meta.env.VITE_*`.
 - `main` → auto-deploys to Vercel Production (prod Supabase)
 - `dev` → auto-deploys to Vercel Preview (dev Supabase)
 - Feature work happens on `dev`, merged to `main` when ready to ship
+
+**IMPORTANT — always push to `dev` first, not `main` directly.**
+Before committing any change, ask: "Is this a small typo/copy fix?" If yes, pushing straight to `main` is acceptable. For anything larger (new features, timer changes, UI changes, schema migrations), always commit to `dev`, verify on the Preview URL, then merge to `main`.
 
 ## Common Commands
 - `npm run dev` — start the local Vite dev server (uses `.env.development`)
