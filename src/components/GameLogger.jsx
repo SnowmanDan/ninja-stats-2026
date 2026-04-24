@@ -199,6 +199,11 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
   const [photoPreview,   setPhotoPreview]   = useState(isEditMode ? (game.initialPhotoUrl ?? null) : null)
   const [photoUploading, setPhotoUploading] = useState(false)
   const photoInputRef = useRef(null)
+  /*
+    photoUrlRef mirrors photoUrl so handleSave always reads the latest
+    value even if React hasn't re-rendered yet since the upload completed.
+  */
+  const photoUrlRef = useRef(isEditMode ? (game.initialPhotoUrl ?? null) : null)
 
   async function handlePhotoSelect(e) {
     const file = e.target.files?.[0]
@@ -222,6 +227,7 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
     }
 
     const { data: urlData } = db.storage.from('game-photos').getPublicUrl(filename)
+    photoUrlRef.current = urlData.publicUrl
     setPhotoUrl(urlData.publicUrl)
     setPhotoUploading(false)
   }
@@ -289,7 +295,7 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
           team_score:     ninjasScore,
           opponent_score: opponentScore,
           notes:          notes.trim() || null,
-          photo_url:      photoUrl,
+          photo_url:      photoUrlRef.current,
         })
         .eq('id', game.id)
 
@@ -355,7 +361,7 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
           team_score:     ninjasScore,
           opponent_score: opponentScore,
           notes:          notes.trim() || null,
-          photo_url:      photoUrl,
+          photo_url:      photoUrlRef.current,
           team_id:        teamId,
         })
         .select()
