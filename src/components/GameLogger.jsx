@@ -376,6 +376,8 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
         return
       }
 
+      console.log('[Save] savedGame from Supabase:', savedGame)
+
       const statsRows = Object.entries(statsByPlayer).map(([player_id, stats]) => ({
         game_id:   savedGame.id,
         player_id: Number(player_id),
