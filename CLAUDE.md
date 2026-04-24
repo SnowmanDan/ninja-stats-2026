@@ -64,7 +64,7 @@ soccer-stats/
 - **Schema:**
   - `teams`: `id`, `name`, `slug`, `season` — multi-team support
   - `players`: `id` (int PK), `name` (text), `number` (int), `team_id` (FK)
-  - `games`: `id` (int PK), `date`, `opponent`, `team_score`, `opponent_score`, `notes`, `team_id` (FK)
+  - `games`: `id` (int PK), `date`, `opponent`, `team_score`, `opponent_score`, `notes`, `photo_url` (text, nullable), `team_id` (FK)
   - `game_stats`: `id` (int PK), `game_id` (FK), `player_id` (FK), `goals`, `assists`, `shots_on_goal`, `tackles`, `saves`, `minutes_in_goal` (default 0), `goals_allowed` (default 0)
 - **Important:** Jersey `number` ≠ player `id`. Always join through `id` for relationships, display by `number` and `name`.
 - **Roster:** 13 players (IDs 1–13). Team name is always "Ninjas." Notable spellings: **Hailey** (ID 8), **Eleanora** (ID 1), **Eliana** (formerly "Ellie").
@@ -77,8 +77,15 @@ soccer-stats/
 - **New game:** events held in React state + localStorage draft for crash recovery
 - **Edit game:** pre-populated from existing `game_stats`; no localStorage draft
 - **Save:** INSERT or UPDATE `games` → DELETE + re-INSERT `game_stats`
-- **Timer:** live MM:SS game clock on the logger screen with play/pause/reset controls
+- **Timer:** countdown timer with configurable half length (default 25 min); play/pause/reset; halftime detection
 - **Game notes:** entered on the logging screen, saved to `games.notes`
+- **Event Guide:** collapsible reference card on the logger screen explaining each event type
+- **Photo:** coach can attach one photo per game (camera capture on mobile); stored in Supabase Storage bucket `game-photos`; `photo_url` saved on `games` row; SVG camera icon appears in Game History date column for games with a photo; tapping opens a modal
+
+## Supabase Storage
+- Bucket: `game-photos` (public) — must be created manually in each Supabase project
+- RLS policies on `storage.objects`: INSERT and SELECT for `anon` scoped to `bucket_id = 'game-photos'`
+- Migration: `supabase/migrations/20260423_add_photo_url.sql`
 
 ## Dashboard UX
 - **Game History rows:** swipe left to reveal Edit and Delete buttons
