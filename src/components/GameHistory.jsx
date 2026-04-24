@@ -269,19 +269,24 @@ export default function GameHistory({ games: gamesProp, db, onDelete, onEdit, on
                   onTouchEnd={(e)   => handleTouchEnd(e, g.id)}
                   onClick={(e)      => handleRowClick(e, g)}
                 >
-                  <span className="gh-col-date">{formatDate(g.date)}</span>
-                  <span className="gh-col-opponent">
-                    {g.opponent}
+                  <span className="gh-col-date">
+                    {formatDate(g.date)}
                     {g.photoUrl && (
                       <button
                         className="gh-photo-btn"
                         onClick={(e) => { e.stopPropagation(); setPhotoGame(g) }}
                         aria-label={`View photo from game vs. ${g.opponent}`}
                       >
-                        📷
+                        {/* Simple camera outline — clean digital style */}
+                        <svg viewBox="0 0 16 14" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.2">
+                          <rect x="1" y="3" width="14" height="10" rx="1.5"/>
+                          <circle cx="8" cy="8" r="2.5"/>
+                          <path d="M5.5 3L6.5 1h3l1 2"/>
+                        </svg>
                       </button>
                     )}
                   </span>
+                  <span className="gh-col-opponent">{g.opponent}</span>
                   <span className="gh-col-score">{g.teamScore}–{g.opponentScore}</span>
                   <span className="gh-col-result">
                     <span className={`result-badge ${result}`}>{resultLabel}</span>
