@@ -230,6 +230,7 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
     photoUrlRef.current = urlData.publicUrl
     setPhotoUrl(urlData.publicUrl)
     setPhotoUploading(false)
+    console.log('[Photo] Upload complete, URL:', urlData.publicUrl)
   }
 
   /* ---- Derived scores ----------------------------------------- */
@@ -267,6 +268,7 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
   /* ---- Save --------------------------------------------------- */
 
   async function handleSave() {
+    console.log('[Save] photoUrlRef.current:', photoUrlRef.current)
     setSaving(true)
     setSaveError(null)
 
