@@ -9,11 +9,11 @@ Set up separate Supabase projects for dev and production so changes can be teste
 - [x] Create .env.example template committed to git
 - [x] Update App.jsx to read from import.meta.env
 - [x] Update CLAUDE.md to document the workflow
-- [ ] Create dev Supabase project at supabase.com
-- [ ] Fill in .env.development with dev project credentials
-- [ ] Set Vercel environment variables for Production and Preview
-- [ ] Run migrations on dev Supabase project to match prod schema
-- [ ] Create `dev` git branch for ongoing development
+- [x] Create dev Supabase project at supabase.com
+- [x] Fill in .env.development with dev project credentials
+- [x] Set Vercel environment variables for Production and Preview
+- [x] Run migrations on dev Supabase project to match prod schema
+- [x] Create `dev` git branch for ongoing development
 
 ---
 

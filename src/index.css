@@ -1242,6 +1242,46 @@ tbody tr:hover {
 .gh-col-score    { flex: 1 1 0; font-size: 0.85rem; text-align: center; }
 .gh-col-result   { flex: 1 1 0; text-align: right; }
 
+/* ── Photo icon in date column ─────────────────────────────────── */
+
+/* Inline button wrapping the SVG camera icon — sits right of the date text */
+.gh-photo-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 0 0 5px;
+  line-height: 1;
+  vertical-align: middle;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+}
+.gh-photo-btn:hover { color: var(--white); }
+
+/* ── Photo modal ────────────────────────────────────────────────── */
+
+/* Reuses .gh-confirm-overlay for the dim backdrop */
+.gh-photo-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.gh-photo-modal-img {
+  width: 100%;
+  border-radius: 8px;
+  object-fit: contain;
+  max-height: 60vh;
+}
+
 /* ── Delete confirmation modal ─────────────────────────────────── */
 
 /* Full-screen semi-transparent overlay — tap to dismiss */

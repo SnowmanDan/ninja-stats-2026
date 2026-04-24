@@ -59,6 +59,7 @@ export default function GameHistory({ games: gamesProp, db, onDelete, onEdit, on
   const [confirmGame,  setConfirmGame]  = useState(null)   /* game pending delete confirmation */
   const [deleting,     setDeleting]     = useState(false)
   const [deleteError,  setDeleteError]  = useState(null)
+  const [photoGame,    setPhotoGame]    = useState(null)   /* game whose photo is shown in the modal */
 
   /*
     rowRefs — direct DOM references to each sliding row element.
@@ -269,7 +270,23 @@ export default function GameHistory({ games: gamesProp, db, onDelete, onEdit, on
                   onTouchEnd={(e)   => handleTouchEnd(e, g.id)}
                   onClick={(e)      => handleRowClick(e, g)}
                 >
-                  <span className="gh-col-date">{formatDate(g.date)}</span>
+                  <span className="gh-col-date">
+                    {formatDate(g.date)}
+                    {g.photoUrl && (
+                      <button
+                        className="gh-photo-btn"
+                        onClick={(e) => { e.stopPropagation(); setPhotoGame(g) }}
+                        aria-label={`View photo from game vs. ${g.opponent}`}
+                      >
+                        {/* Simple camera outline — clean digital style */}
+                        <svg viewBox="0 0 16 14" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.2">
+                          <rect x="1" y="3" width="14" height="10" rx="1.5"/>
+                          <circle cx="8" cy="8" r="2.5"/>
+                          <path d="M5.5 3L6.5 1h3l1 2"/>
+                        </svg>
+                      </button>
+                    )}
+                  </span>
                   <span className="gh-col-opponent">{g.opponent}</span>
                   <span className="gh-col-score">{g.teamScore}–{g.opponentScore}</span>
                   <span className="gh-col-result">
@@ -299,6 +316,21 @@ export default function GameHistory({ games: gamesProp, db, onDelete, onEdit, on
             )
           })}
         </ul>
+      )}
+
+      {/* ── Photo modal ──────────────────────────────────────────── */}
+      {photoGame && (
+        <div className="gh-confirm-overlay" onClick={() => setPhotoGame(null)}>
+          <div className="gh-photo-modal" onClick={(e) => e.stopPropagation()}>
+            <p className="gh-confirm-title">vs. {photoGame.opponent} — {formatDate(photoGame.date)}</p>
+            <img
+              src={photoGame.photoUrl}
+              alt={`Photo from game vs. ${photoGame.opponent}`}
+              className="gh-photo-modal-img"
+            />
+            <button className="btn btn-ghost" onClick={() => setPhotoGame(null)}>Close</button>
+          </div>
+        </div>
       )}
 
       {/* ── Delete confirmation modal ─────────────────────────────── */}
