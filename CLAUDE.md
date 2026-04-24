@@ -37,12 +37,14 @@ soccer-stats/
 │   ├── main.jsx                  # React entry point (createRoot + StrictMode)
 │   ├── App.jsx                   # Top-level component, owns shared state and data fetching
 │   ├── index.css                 # All styles, mobile-first
+│   ├── supabase.js               # Shared Supabase client instance
 │   └── components/
 │       ├── Confetti.jsx          # Celebration effect on win
 │       ├── GameHistory.jsx       # Past games list with swipe-to-edit/delete
 │       ├── GameLogger.jsx        # Live in-game event capture
 │       ├── GameSetup.jsx         # Pre-game date/opponent setup screen
 │       ├── GoalieStats.jsx       # Per-player goalie minutes + goals allowed
+│       ├── Login.jsx             # Magic link sign-in screen
 │       ├── PixelPlayers.jsx      # Pixel-art player avatars (hidden in compact header)
 │       ├── Roster.jsx            # Team roster table
 │       ├── RosterEditor.jsx      # Add/edit/delete players (Manage Roster screen)
@@ -60,17 +62,31 @@ soccer-stats/
 ```
 
 ## Data
-- **Live data** comes from Supabase (PostgreSQL). Connection lives in the React app via `@supabase/supabase-js`.
+- **Live data** comes from Supabase (PostgreSQL). Connection lives in `src/supabase.js` via `@supabase/supabase-js`.
 - **Schema:**
   - `teams`: `id`, `name`, `slug`, `season`, `owner_id` (uuid, FK to auth.users), `created_at` — multi-team support
   - `players`: `id` (int PK), `name` (text), `number` (int), `team_id` (FK), `created_by` (uuid, FK to auth.users), `created_at`
-  - `games`: `id` (int PK), `date`, `opponent`, `team_score`, `opponent_score`, `notes`, `team_id` (FK), `created_by` (uuid, FK to auth.users), `created_at`
+  - `games`: `id` (int PK), `date`, `opponent`, `team_score`, `opponent_score`, `notes`, `photo_url` (text, nullable), `team_id` (FK), `created_by` (uuid, FK to auth.users), `created_at`
   - `game_stats`: `id` (int PK), `game_id` (FK), `player_id` (FK), `goals`, `assists`, `shots_on_goal`, `tackles`, `saves`, `minutes_in_goal` (default 0), `goals_allowed` (default 0), `created_at`
   - `team_members`: `id`, `user_id` (uuid, FK to auth.users), `team_id` (FK), `role` (text: 'coach' | 'parent' | 'viewer'), `created_at`
 - **Important:** Jersey `number` ≠ player `id`. Always join through `id` for relationships, display by `number` and `name`.
 - **Roster:** 13 players (IDs 1–13). Team name is always "Ninjas." Notable spellings: **Hailey** (ID 8), **Eleanora** (ID 1), **Eliana** (formerly "Ellie").
-- **RLS policies** are enabled. Migrations for INSERT/UPDATE/DELETE policies on `players`, `game_stats`, and `games` are in `supabase/migrations/`.
+- **RLS policies** are enabled for both `anon` and `authenticated` roles. Migrations in `supabase/migrations/`.
 - **Migrations** are run manually in the Supabase SQL Editor — there is no CLI migration runner set up.
+
+## Auth (Phase 4 — in progress)
+- **Method:** Supabase magic link (email OTP) — no password required
+- **Flow:** User enters email → Supabase sends magic link → click link → signed in automatically
+- **Session:** stored by Supabase client; persists across page reloads
+- **Gate:** `App.jsx` checks `db.auth.getSession()` on load; shows `<Login />` if no session
+- **Sign out:** button in dashboard header calls `db.auth.signOut()`
+- **Redirect URL:** `emailRedirectTo` is set to `window.location.href` (current page) so React Router doesn't strip the `?code=` param on redirect
+- **Supabase dashboard settings:** Authentication → URL Configuration → Site URL must match the app URL (`http://localhost:5173` for dev, Vercel URL for prod); `http://localhost:5173/**` must be in Redirect URLs allowlist
+
+## Supabase Storage
+- Bucket: `game-photos` (public) — must be created manually in each Supabase project
+- RLS policies on `storage.objects`: INSERT and SELECT for `anon` scoped to `bucket_id = 'game-photos'`
+- Migration: `supabase/migrations/20260423_add_photo_url.sql`
 
 ## Game Logger (Phase 1 — complete)
 - **Event types:** Goal, Assist, Shot on Goal, Tackle, Save, Goal Allowed
@@ -78,8 +94,10 @@ soccer-stats/
 - **New game:** events held in React state + localStorage draft for crash recovery
 - **Edit game:** pre-populated from existing `game_stats`; no localStorage draft
 - **Save:** INSERT or UPDATE `games` → DELETE + re-INSERT `game_stats`
-- **Timer:** live MM:SS game clock on the logger screen with play/pause/reset controls
+- **Timer:** countdown timer with configurable half length (default 25 min); play/pause/reset; halftime detection
 - **Game notes:** entered on the logging screen, saved to `games.notes`
+- **Event Guide:** collapsible reference card on the logger screen explaining each event type
+- **Photo:** coach can attach one photo per game (camera capture on mobile); stored in Supabase Storage bucket `game-photos`; `photo_url` saved on `games` row; SVG camera icon appears in Game History date column for games with a photo; tapping opens a modal
 
 ## Dashboard UX
 - **Game History rows:** swipe left to reveal Edit and Delete buttons
@@ -89,7 +107,7 @@ soccer-stats/
 - **Game Stats table** shows the same columns for the selected game
 
 ## Header behavior
-- **Dashboard:** full header with pixel player graphics and team switcher dropdown
+- **Dashboard:** full header with pixel player graphics, team switcher dropdown, and sign-out button
 - **Logger / GameSetup / RosterEditor:** compact header (smaller text, no pixel players, no team switcher) to maximize screen space for actions
 
 ## Environment Variables

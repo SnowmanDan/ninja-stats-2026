@@ -15,9 +15,7 @@ _Nothing in progress — pick something from Up Next!_
 - **SS-10** — Add guide for event logging
 - **SS-11** — Add welcome guide for new users
 - **SS-12** — Move back to previous screen after selecting event; move to score
-- **SS-15** — Add place for photo of field or team from the day
 - **SS-16** — Increase brightness of name font in event logger
-- **SS-17** — Make timer a countdown where you can enter length (e.g. 50 min)
 - **SS-18** — Maybe select which players are present before logging starts
 
 ### Phase 4 — Auth (in progress)
@@ -30,6 +28,7 @@ _Nothing in progress — pick something from Up Next!_
 - Timestamps on game events (Phase 2 — `game_events` table)
 - Substitution tracking
 - Player position tracking
+- Auto-capitalize opponent name field
 
 ---
 
@@ -48,6 +47,10 @@ _Nothing in progress — pick something from Up Next!_
 - Dev/prod Supabase environment setup (separate projects, env vars, Vercel Preview vs Production)
 - PWA — installable via "Add to Home Screen", service worker caching, app icon
 - Cloud dev workflow: edit on GitHub with Copilot → push to `dev` → test Preview URL → merge to `main`
-- Add photo to game history (Supabase Storage, photo_url on games, camera capture, modal view)
+- Countdown timer with configurable half length (replaces count-up)
+- Collapsible Event Guide on logger screen
+- Auto-capitalize opponent name field
+- Game photo — upload from mobile, SVG camera icon in Game History, tap to view modal (SS-15)
+- Supabase storage RLS scoped to game-photos bucket only
 - Auth prep — created_at on all tables, team_members table, created_by/owner_id columns
 - Magic link sign-in (Phase 4 start) — Login screen, auth gate, sign-out button, authenticated RLS policies
