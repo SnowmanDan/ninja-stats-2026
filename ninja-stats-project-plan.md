@@ -171,9 +171,6 @@ Evolve **ninja-stats-2026** from a single-file HTML stats site into a **mobile-f
 
 **New concepts:** Authentication flows, authorization patterns, multi-tenant database design, Supabase RLS policies.
 
-**Backlog (Phase 4):**
-- **Public view link** — shareable read-only URL for a team's stats (e.g. `/teams/ninjas/public?token=abc123`). No login required. Implemented as a signed token stored in the `teams` table (or a separate `public_links` table) that gates a read-only RLS policy or a Supabase Edge Function. Useful for sharing season stats with parents who don't want to create an account. Token should be revocable by the team owner.
-
 **RLS hardening (required in this phase):** The app currently ships with wide-open policies on `games`, `game_stats`, `players`, and `teams` (INSERT/UPDATE/DELETE all `using (true)` for the `anon` role, see `supabase/migrations/20260414_delete_policies.sql`). Team scoping today is enforced only at the application layer via `WHERE team_id = $1` in the React client. Because the Supabase anon key is public (it ships in the JS bundle), anyone can bypass the UI with DevTools and read or modify any team's rows. This is already a live cross-team data leak between the Ninjas and Inter Milan, but the blast radius is effectively zero because both teams are managed by the same person. That stops being true the moment a third team (or a coach you don't know) joins. Before opening signup, replace every `using (true)` with an ownership check tied to the team membership table that lands with auth, for example `using (team_id in (select team_id from team_members where user_id = auth.uid()))`. Also add `with check` clauses on INSERT/UPDATE so a user cannot write rows into a team they do not belong to. Do not skip this, it is the single biggest security issue in the codebase and the only reason to defer it is that the constraint (real outside users) is not real yet.
 
 ---

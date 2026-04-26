@@ -21,6 +21,7 @@ _Nothing in progress — pick something from Up Next!_
 - **SS-18** — Maybe select which players are present before logging starts
 
 ### Other
+- **Public view link** — shareable read-only URL for a team's stats page, no login required. Signed token stored on the team record (revocable by the owner). Prerequisite: Phase 4 auth + RLS.
 - PWA offline support (Phase 3 — offline event queue, IndexedDB)
 - Timestamps on game events (Phase 2 — `game_events` table)
 - Substitution tracking
