@@ -170,10 +170,10 @@ Evolve **ninja-stats-2026** from a single-file HTML stats site into a **mobile-f
 - Row Level Security so teams only see their own data
 
 **Already done (as of April 2026):**
-- ✅ `team_members` table exists in both dev and prod (`user_id`, `team_id`, `role`, `created_at`)
-- ✅ Dev has a SELECT policy for `authenticated` role (correct direction — not anon)
-- ⚠️ Prod is missing the SELECT policy — apply `20260426_document_team_members.sql` to fix
-- ⚠️ No migration file existed for this table — captured in `20260426_document_team_members.sql`
+- ✅ `team_members` table — `20260423_auth_prep.sql`
+- ✅ `created_by` on `games` and `players`, `owner_id` on `teams` — `20260423_auth_prep.sql` + `20260423_add_owner_to_teams.sql`
+- ✅ Full `authenticated` role RLS policies on all four tables — `20260423_authenticated_role_policies.sql`
+- ✅ Magic link auth wired into React — `Login.jsx`, `src/supabase.js`, auth gate + sign-out in `App.jsx`
 
 **New concepts:** Authentication flows, authorization patterns, multi-tenant database design, Supabase RLS policies.
 

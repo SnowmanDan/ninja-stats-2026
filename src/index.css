@@ -155,45 +155,6 @@ header {
   display: none;
 }
 
-/* ===== 4b. SIGN-OUT & LOGIN =====================================
-   Sign-out sits at the bottom of the full dashboard header.
-   Login confirmation card has centred text and more breathing room.
-================================================================= */
-.header-sign-out {
-  text-align: right;
-  padding: 4px 0 0;
-}
-
-.btn-sign-out {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  font-size: 0.75rem;
-  cursor: pointer;
-  padding: 4px 8px;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.btn-sign-out:hover {
-  color: var(--text-primary);
-}
-
-.login-confirm-card {
-  text-align: center;
-  padding: 2rem;
-}
-
-.login-confirm-heading {
-  margin: 0 0 0.75rem;
-}
-
-.login-confirm-body {
-  color: var(--text-muted);
-  margin-bottom: 1.5rem;
-  line-height: 1.6;
-}
-
 /* ===== 5. CARDS =================================================
    Each section lives in a card — a slightly lighter surface that
    floats above the dark page background. The red top stripe is the
@@ -744,6 +705,73 @@ tbody tr:hover {
   background: rgba(255,255,255,0.25);
   border-color: #fff;
   color: #fff;
+}
+
+/* ===== 15a. GAME LOGGER — PHOTO ================================
+   Photo picker inside the notes card + preview display.
+================================================================= */
+.photo-add-btn {
+  margin-top: 10px;
+  width: 100%;
+}
+
+.photo-preview-wrap {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.photo-preview {
+  width: 100%;
+  border-radius: 8px;
+  object-fit: cover;
+  max-height: 240px;
+}
+
+.photo-status {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 0;
+}
+
+.photo-change-btn {
+  align-self: flex-start;
+}
+
+/* Photo icon button in game history rows */
+.gh-photo-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 0 0 5px;
+  line-height: 1;
+  vertical-align: middle;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+}
+
+.gh-photo-btn:hover { color: var(--white); }
+
+/* Photo modal */
+.gh-photo-modal {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 360px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gh-photo-modal-img {
+  width: 100%;
+  border-radius: 8px;
+  object-fit: cover;
+  max-height: 320px;
 }
 
 /* ===== 15b. GAME LOGGER — EVENT GUIDE ===========================
@@ -1402,6 +1430,46 @@ tbody tr:hover {
 .gh-col-score    { flex: 1 1 0; font-size: 0.85rem; text-align: center; }
 .gh-col-result   { flex: 1 1 0; text-align: right; }
 
+/* ── Photo icon in date column ─────────────────────────────────── */
+
+/* Inline button wrapping the SVG camera icon — sits right of the date text */
+.gh-photo-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 0 0 5px;
+  line-height: 1;
+  vertical-align: middle;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+}
+.gh-photo-btn:hover { color: var(--white); }
+
+/* ── Photo modal ────────────────────────────────────────────────── */
+
+/* Reuses .gh-confirm-overlay for the dim backdrop */
+.gh-photo-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.gh-photo-modal-img {
+  width: 100%;
+  border-radius: 8px;
+  object-fit: contain;
+  max-height: 60vh;
+}
+
 /* ── Delete confirmation modal ─────────────────────────────────── */
 
 /* Full-screen semi-transparent overlay — tap to dismiss */
@@ -1449,6 +1517,122 @@ footer {
   letter-spacing: 2px;
   text-transform: uppercase;
   color: var(--text-muted);
+}
+
+/* ===== 17. LOGIN SCREEN ========================================= */
+
+.login-card {
+  max-width: 400px;
+  margin: 32px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.login-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.login-subtitle {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.login-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.login-input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 1rem;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-input, #1a1a1a);
+  color: var(--text-primary);
+  box-sizing: border-box;
+}
+
+.login-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.login-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 1rem;
+}
+
+.login-error {
+  color: #e57373;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* Success state after sending the magic link */
+.login-success {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.login-success-icon {
+  font-size: 2.5rem;
+  margin: 0;
+}
+
+.login-success h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.login-success p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.login-hint {
+  font-size: 0.85rem !important;
+  font-style: italic;
+}
+
+/* ===== 18. SIGN OUT BUTTON ====================================== */
+
+.header-signout {
+  text-align: center;
+  padding: 4px 0 8px;
+}
+
+.signout-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  text-decoration: underline;
+  opacity: 0.6;
+}
+
+.signout-btn:hover {
+  opacity: 1;
 }
 
 /* ===== 12. RESPONSIVE: LARGER SCREENS ==========================
