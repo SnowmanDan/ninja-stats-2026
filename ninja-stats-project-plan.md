@@ -17,7 +17,7 @@ Evolve **ninja-stats-2026** from a single-file HTML stats site into a **mobile-f
 | **1** | Live game logger MVP | Touch UI, event capture, state mgmt | ✅ Done |
 | **2** | Post-game review + schema evolution | Schema design, migrations, CRUD | ⬜ |
 | **3** | PWA + offline support | Service workers, caching, IndexedDB | 🔶 Partial — installable + caching done; offline event queue remaining |
-| **4** | Multi-team + auth | Supabase Auth, RLS, multi-tenancy | 🔶 Partial — magic link auth, created_by/owner_id done; team creation + RLS tightening remaining |
+| **4** | Multi-team + auth | Supabase Auth, RLS, multi-tenancy | 🔶 Partial — magic link auth, RLS tightening, team creation done; email invites remaining |
 | **5** | Productization | Stripe, analytics, onboarding, leaderboards | ⬜ |
 
 **Phases 0–3** = a usable product for the Ninjas.
