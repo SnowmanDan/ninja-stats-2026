@@ -169,6 +169,12 @@ Evolve **ninja-stats-2026** from a single-file HTML stats site into a **mobile-f
 - Role-based access (coach vs. parent vs. viewer)
 - Row Level Security so teams only see their own data
 
+**Already done (as of April 2026):**
+- ✅ `team_members` table exists in both dev and prod (`user_id`, `team_id`, `role`, `created_at`)
+- ✅ Dev has a SELECT policy for `authenticated` role (correct direction — not anon)
+- ⚠️ Prod is missing the SELECT policy — apply `20260426_document_team_members.sql` to fix
+- ⚠️ No migration file existed for this table — captured in `20260426_document_team_members.sql`
+
 **New concepts:** Authentication flows, authorization patterns, multi-tenant database design, Supabase RLS policies.
 
 **RLS hardening (required in this phase):** The app currently ships with wide-open policies on `games`, `game_stats`, `players`, and `teams` (INSERT/UPDATE/DELETE all `using (true)` for the `anon` role, see `supabase/migrations/20260414_delete_policies.sql`). Team scoping today is enforced only at the application layer via `WHERE team_id = $1` in the React client. Because the Supabase anon key is public (it ships in the JS bundle), anyone can bypass the UI with DevTools and read or modify any team's rows. This is already a live cross-team data leak between the Ninjas and Inter Milan, but the blast radius is effectively zero because both teams are managed by the same person. That stops being true the moment a third team (or a coach you don't know) joins. Before opening signup, replace every `using (true)` with an ownership check tied to the team membership table that lands with auth, for example `using (team_id in (select team_id from team_members where user_id = auth.uid()))`. Also add `with check` clauses on INSERT/UPDATE so a user cannot write rows into a team they do not belong to. Do not skip this, it is the single biggest security issue in the codebase and the only reason to defer it is that the constraint (real outside users) is not real yet.
