@@ -19,6 +19,7 @@ import { SpeedInsights } from '@vercel/speed-insights/react'
 
 import './index.css'
 
+import Login         from './components/Login'
 import Confetti      from './components/Confetti'
 import GameHistory   from './components/GameHistory'
 import GameLogger    from './components/GameLogger'
@@ -111,6 +112,35 @@ function App() {
 
   // Saved draft from a previous logger session (crash / accidental refresh)
   const [savedDraft, setSavedDraft] = useState(null)
+
+  // Auth session — null means signed out, object means signed in.
+  // authLoading stays true until getSession() resolves so we never
+  // flash the login screen to a user who is already signed in.
+  const [session,     setSession]     = useState(null)
+  const [authLoading, setAuthLoading] = useState(true)
+
+  /* ---- Auth (runs once on mount) -------------------------------- */
+
+  /*
+    getSession() restores a session from localStorage on every page
+    load, and also handles the magic-link redirect (exchanges the
+    one-time code in the URL for a real session token).
+
+    onAuthStateChange keeps React in sync whenever the session changes
+    — sign-in, sign-out, or token refresh.
+  */
+  useEffect(() => {
+    db.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      setAuthLoading(false)
+    })
+
+    const { data: { subscription } } = db.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
 
   /* ---- Data fetching: teams (runs once on mount) ---------------- */
 
@@ -320,6 +350,24 @@ function App() {
     setView('dashboard')
     setActiveGame(null)
     setRefreshKey((k) => k + 1)
+  }
+
+  /* ---- Auth guard -------------------------------------------- */
+
+  // Brief loading state while we check for an existing session.
+  // Prevents the login screen from flashing for already-signed-in users.
+  if (authLoading) {
+    return (
+      <div className="page-wrapper">
+        <div className="card" style={{ textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+          Loading…
+        </div>
+      </div>
+    )
+  }
+
+  if (!session) {
+    return <Login db={db} />
   }
 
   /* ---- Non-dashboard views ------------------------------------ */
@@ -595,6 +643,15 @@ function PageHeader({ team, teams, compact = false }) {
           pixel players. Hidden when there's only one team, and hidden
           in compact mode (logger/roster screens). */}
       {!compact && <TeamSwitcher teams={teams} currentSlug={team ? team.slug : ''} />}
+
+      {/* Sign-out link — only on the full dashboard header */}
+      {!compact && (
+        <div className="header-sign-out">
+          <button className="btn-sign-out" onClick={() => db.auth.signOut()}>
+            Sign out
+          </button>
+        </div>
+      )}
     </header>
   )
 }

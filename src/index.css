@@ -155,6 +155,45 @@ header {
   display: none;
 }
 
+/* ===== 4b. SIGN-OUT & LOGIN =====================================
+   Sign-out sits at the bottom of the full dashboard header.
+   Login confirmation card has centred text and more breathing room.
+================================================================= */
+.header-sign-out {
+  text-align: right;
+  padding: 4px 0 0;
+}
+
+.btn-sign-out {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.btn-sign-out:hover {
+  color: var(--text-primary);
+}
+
+.login-confirm-card {
+  text-align: center;
+  padding: 2rem;
+}
+
+.login-confirm-heading {
+  margin: 0 0 0.75rem;
+}
+
+.login-confirm-body {
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
 /* ===== 5. CARDS =================================================
    Each section lives in a card — a slightly lighter surface that
    floats above the dark page background. The red top stripe is the
