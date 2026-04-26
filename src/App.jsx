@@ -120,7 +120,8 @@ function App() {
   /*
     Called by TeamCreator after it successfully inserts the team +
     team_members rows. Re-fetches memberships so the gate clears,
-    then navigates to the new team's dashboard URL.
+    increments teamsRefreshKey so the teams list re-fetches and picks
+    up the new team, then navigates to the new team's dashboard URL.
   */
   async function handleTeamCreated(slug) {
     const { data } = await db
@@ -129,7 +130,8 @@ function App() {
       .eq('user_id', user.id)
 
     setUserTeams(data || [])
-    navigate(`/${slug}`)
+    // Hard reload so the full teams list re-fetches with the new team included
+    window.location.href = `/${slug}`
   }
 
   /* ---- State -------------------------------------------------- */
@@ -164,10 +166,10 @@ function App() {
     the routing simple. A future refactor can promote them to real
     routes (e.g. /ninjas/setup, /ninjas/logger/:gameId).
   */
-  const [view,       setView]       = useState('dashboard')
-  const [activeGame,      setActiveGame]      = useState(null)
-  const [refreshKey,      setRefreshKey]      = useState(0)
-  const [selectedGameId,  setSelectedGameId]  = useState(null) /* null = show most recent */
+  const [view,            setView]           = useState('dashboard')
+  const [activeGame,      setActiveGame]     = useState(null)
+  const [refreshKey,      setRefreshKey]     = useState(0)
+  const [selectedGameId,  setSelectedGameId] = useState(null) /* null = show most recent */
 
   // Saved draft from a previous logger session (crash / accidental refresh)
   const [savedDraft, setSavedDraft] = useState(null)
