@@ -19,7 +19,6 @@ _Nothing in progress — pick something from Up Next!_
 - **SS-18** — Maybe select which players are present before logging starts
 
 ### Phase 4 — Auth (in progress)
-- Wire up `created_by` / `owner_id` — populate when user creates a game or team
 - Team creation flow — let a new user create their own team instead of seeding in SQL
 - Tighten RLS — replace wide-open `using (true)` with ownership checks against `team_members`
 - **Invite by email** — coach enters an email, app sends a magic link that auto-adds the user to the team with a role (coach vs. viewer); needs an invites table, invite token, and role assignment on accept
@@ -55,3 +54,4 @@ _Nothing in progress — pick something from Up Next!_
 - Supabase storage RLS scoped to game-photos bucket only
 - Auth prep — created_at on all tables, team_members table, created_by/owner_id columns
 - Magic link sign-in (Phase 4 start) — Login screen, auth gate, sign-out button, authenticated RLS policies
+- Wire up `created_by` / `owner_id` — new games and players stamped with creating user's ID; existing teams backfilled via SQL

@@ -13,7 +13,7 @@
 */
 
 import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 
 import './index.css'
@@ -23,7 +23,8 @@ import './index.css'
   by any component (Login, App, etc.) without recreating the connection.
 */
 import { db } from './supabase'
-import Login from './components/Login'
+import Login       from './components/Login'
+import TeamCreator from './components/TeamCreator'
 
 import Confetti      from './components/Confetti'
 import GameHistory   from './components/GameHistory'
@@ -51,6 +52,7 @@ function App() {
     returns { teamSlug: "ninjas" }.
   */
   const { teamSlug } = useParams()
+  const navigate     = useNavigate()
 
   /* ---- Auth state --------------------------------------------- */
 
@@ -80,6 +82,55 @@ function App() {
     // Clean up the listener when App unmounts
     return () => subscription.unsubscribe()
   }, [])
+
+  /* ---- Team membership check ---------------------------------- */
+
+  /*
+    userTeams — the team_members rows for the signed-in user.
+    Used to decide whether to show TeamCreator (no memberships yet)
+    or proceed to the normal dashboard.
+
+    Fetched once after auth loads. Re-fetched after a new team is created
+    so the app immediately navigates to the new team's dashboard.
+  */
+  const [userTeams,       setUserTeams]       = useState([])
+  const [userTeamsLoaded, setUserTeamsLoaded] = useState(false)
+
+  useEffect(() => {
+    if (!user) {
+      // Reset when signed out so the next sign-in starts fresh
+      setUserTeams([])
+      setUserTeamsLoaded(false)
+      return
+    }
+
+    async function fetchUserTeams() {
+      const { data } = await db
+        .from('team_members')
+        .select('team_id, role')
+        .eq('user_id', user.id)
+
+      setUserTeams(data || [])
+      setUserTeamsLoaded(true)
+    }
+
+    fetchUserTeams()
+  }, [user])
+
+  /*
+    Called by TeamCreator after it successfully inserts the team +
+    team_members rows. Re-fetches memberships so the gate clears,
+    then navigates to the new team's dashboard URL.
+  */
+  async function handleTeamCreated(slug) {
+    const { data } = await db
+      .from('team_members')
+      .select('team_id, role')
+      .eq('user_id', user.id)
+
+    setUserTeams(data || [])
+    navigate(`/${slug}`)
+  }
 
   /* ---- State -------------------------------------------------- */
 
@@ -340,6 +391,12 @@ function App() {
 
   // No session — show the login screen.
   if (!user) return <Login db={db} />
+
+  // Checking team memberships — wait silently to avoid a flash.
+  if (!userTeamsLoaded) return null
+
+  // New user with no teams — show the team creation screen.
+  if (userTeams.length === 0) return <TeamCreator db={db} user={user} onCreated={handleTeamCreated} />
 
   /* ---- Non-dashboard views ------------------------------------ */
 

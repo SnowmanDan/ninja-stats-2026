@@ -68,7 +68,7 @@ soccer-stats/
   - `players`: `id` (int PK), `name` (text), `number` (int), `team_id` (FK), `created_by` (uuid, FK to auth.users), `created_at`
   - `games`: `id` (int PK), `date`, `opponent`, `team_score`, `opponent_score`, `notes`, `photo_url` (text, nullable), `team_id` (FK), `created_by` (uuid, FK to auth.users), `created_at`
   - `game_stats`: `id` (int PK), `game_id` (FK), `player_id` (FK), `goals`, `assists`, `shots_on_goal`, `tackles`, `saves`, `minutes_in_goal` (default 0), `goals_allowed` (default 0), `created_at`
-  - `team_members`: `id`, `user_id` (uuid, FK to auth.users), `team_id` (FK), `role` (text: 'coach' | 'parent' | 'viewer'), `created_at`
+  - `team_members`: `id`, `user_id` (uuid, FK to auth.users), `team_id` (FK), `role` (text: 'owner' | 'coach' | 'parent' | 'viewer'), `created_at`
 - **Important:** Jersey `number` ≠ player `id`. Always join through `id` for relationships, display by `number` and `name`.
 - **Roster:** 13 players (IDs 1–13). Team name is always "Ninjas." Notable spellings: **Hailey** (ID 8), **Eleanora** (ID 1), **Eliana** (formerly "Ellie").
 - **RLS policies** are enabled for both `anon` and `authenticated` roles. Migrations in `supabase/migrations/`.

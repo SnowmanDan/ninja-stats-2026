@@ -17,7 +17,7 @@ Evolve **ninja-stats-2026** from a single-file HTML stats site into a **mobile-f
 | **1** | Live game logger MVP | Touch UI, event capture, state mgmt | ✅ Done |
 | **2** | Post-game review + schema evolution | Schema design, migrations, CRUD | ⬜ |
 | **3** | PWA + offline support | Service workers, caching, IndexedDB | 🔶 Partial — installable + caching done; offline event queue remaining |
-| **4** | Multi-team + auth | Supabase Auth, RLS, multi-tenancy | ⬜ |
+| **4** | Multi-team + auth | Supabase Auth, RLS, multi-tenancy | 🔶 Partial — magic link auth, created_by/owner_id done; team creation + RLS tightening remaining |
 | **5** | Productization | Stripe, analytics, onboarding, leaderboards | ⬜ |
 
 **Phases 0–3** = a usable product for the Ninjas.
@@ -227,7 +227,7 @@ teams:        id (int PK), name, slug, season, owner_id (uuid → auth.users), c
 players:      id (int PK), name (text), number (int), team_id (FK), created_by (uuid → auth.users), created_at
 games:        id (int PK), date, opponent, team_score, opponent_score, notes, team_id (FK), created_by (uuid → auth.users), created_at
 game_stats:   id (int PK), game_id (FK), player_id (FK), goals, assists, shots_on_goal, tackles, saves, minutes_in_goal (default 0), goals_allowed (default 0), created_at
-team_members: id (int PK), user_id (uuid → auth.users), team_id (FK), role (text: coach | parent | viewer), created_at
+team_members: id (int PK), user_id (uuid → auth.users), team_id (FK), role (text: owner | coach | parent | viewer), created_at
 ```
 
 13 players (IDs 1–13). Jersey `number` ≠ `id`. Team is always "Ninjas."
@@ -235,4 +235,4 @@ Notable spellings: Hailey (ID 8), Eleanora (ID 1), Eliana (formerly "Ellie").
 
 ---
 
-*Last updated: April 22, 2026*
+*Last updated: April 26, 2026*
