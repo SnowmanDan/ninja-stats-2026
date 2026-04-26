@@ -44,7 +44,7 @@ import { useState, useEffect, useRef } from 'react'
 const BLANK = () => ({ id: null, name: '', number: '' })
 const INITIAL_BLANKS = 1
 
-export default function RosterEditor({ players, db, teamId, onBack }) {
+export default function RosterEditor({ players, db, teamId, user, onBack }) {
 
   /* ---- Row state ------------------------------------------------ */
 
@@ -150,9 +150,10 @@ export default function RosterEditor({ players, db, teamId, onBack }) {
       if (toInsert.length > 0) {
         const { error: insertError } = await db.from('players').insert(
           toInsert.map((r) => ({
-            name:    r.name.trim(),
-            number:  r.number.trim() !== '' ? parseInt(r.number.trim(), 10) : null,
-            team_id: teamId,
+            name:       r.name.trim(),
+            number:     r.number.trim() !== '' ? parseInt(r.number.trim(), 10) : null,
+            team_id:    teamId,
+            created_by: user?.id ?? null,  // track which coach added this player
           }))
         )
         if (insertError) throw insertError

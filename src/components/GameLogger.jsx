@@ -65,7 +65,7 @@ function formatTime(seconds) {
   return `${m}:${s}`
 }
 
-export default function GameLogger({ game, db, players, teamId, onBack }) {
+export default function GameLogger({ game, db, players, teamId, user, onBack }) {
 
   const isEditMode = !!game.id
 
@@ -365,6 +365,7 @@ export default function GameLogger({ game, db, players, teamId, onBack }) {
           notes:          notes.trim() || null,
           photo_url:      photoUrlRef.current,
           team_id:        teamId,
+          created_by:     user?.id ?? null,  // track which coach logged this game
         })
         .select()
         .single()

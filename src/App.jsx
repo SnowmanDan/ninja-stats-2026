@@ -366,7 +366,7 @@ function App() {
     return (
       <div className="page-wrapper">
         <PageHeader team={currentTeam} teams={teams} compact />
-        <GameLogger game={activeGame} db={db} players={players} teamId={currentTeam.id} onBack={handleBackToDashboard} />
+        <GameLogger game={activeGame} db={db} players={players} teamId={currentTeam.id} user={user} onBack={handleBackToDashboard} />
       </div>
     )
   }
@@ -379,6 +379,7 @@ function App() {
           players={players}
           db={db}
           teamId={currentTeam.id}
+          user={user}
           onBack={handleBackToDashboard}
         />
       </div>
