@@ -83,6 +83,7 @@ export default function Login({ db }) {
               <input
                 id="email"
                 type="email"
+                autoComplete="email"
                 className="login-input"
                 placeholder="you@example.com"
                 value={email}

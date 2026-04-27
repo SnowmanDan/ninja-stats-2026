@@ -22,6 +22,7 @@ _Nothing in progress — pick something from Up Next!_
 - **Invite by email** — coach enters an email, app sends a magic link that auto-adds the user to the team with a role (coach vs. viewer); needs an invites table, invite token, and role assignment on accept
 
 ### Other
+- **iPhone email autofill** — add `autocomplete="email"` to all email inputs (Login, invite form) so iOS can prefill from saved contacts/keychain
 - PWA offline support (Phase 3 — offline event queue, IndexedDB)
 - Timestamps on game events (Phase 2 — `game_events` table)
 - Substitution tracking

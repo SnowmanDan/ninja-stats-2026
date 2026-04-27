@@ -306,6 +306,7 @@ export default function TeamSettings({ db, user, team, userRole, onSaved, onDele
             <input
               id="inv-email"
               type="email"
+              autoComplete="email"
               className="login-input"
               placeholder="coach@example.com"
               value={inviteEmail}
