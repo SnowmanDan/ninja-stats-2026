@@ -1,9 +1,11 @@
 /*
   TeamCreator.jsx — new team setup screen
   ========================================
-  Shown when a signed-in user has no team memberships yet (i.e. brand
-  new user who hasn't created a team). Lets them name their team and
-  set a season, then:
+  Shown in two situations:
+    1. Brand new user with no teams yet — shown automatically after sign-in
+    2. Existing user choosing "+ New Team" from the TeamSwitcher dropdown
+
+  Lets the user name their team and set a season, then:
     1. INSERTs a row into `teams` (with owner_id = their user ID)
     2. INSERTs a row into `team_members` (role = 'owner')
     3. Calls onCreated(slug) so App.jsx can navigate to the new team
@@ -17,6 +19,8 @@
     db        — shared Supabase client (from src/supabase.js)
     user      — the signed-in Supabase auth user object
     onCreated — callback(slug: string) called after successful creation
+    onCancel  — optional callback; if provided, a Cancel button is shown
+                (used when an existing user navigates here from the switcher)
 */
 
 import { useState } from 'react'
@@ -30,7 +34,7 @@ function toSlug(name) {
     .replace(/[^a-z0-9-]/g, '')   // strip anything that's not a letter, number, or hyphen
 }
 
-export default function TeamCreator({ db, user, onCreated }) {
+export default function TeamCreator({ db, user, onCreated, onCancel }) {
 
   const [name,    setName]    = useState('')
   const [season,  setSeason]  = useState('Spring 2026')
@@ -146,6 +150,19 @@ export default function TeamCreator({ db, user, onCreated }) {
           >
             {saving ? 'Creating…' : 'Create Team'}
           </button>
+
+          {/* Cancel is only shown when an existing user navigates here
+              from the TeamSwitcher — new users have nowhere to go back to */}
+          {onCancel && (
+            <button
+              type="button"
+              className="btn login-btn"
+              style={{ marginTop: '0.5rem', background: 'transparent', color: 'var(--text-muted)' }}
+              onClick={onCancel}
+            >
+              Cancel
+            </button>
+          )}
 
         </form>
       </div>

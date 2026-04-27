@@ -403,6 +403,25 @@ function App() {
   /* ---- Non-dashboard views ------------------------------------ */
 
   /*
+    Existing user tapped "+ New Team" in the TeamSwitcher.
+    Reuse TeamCreator with an onCancel so they can back out.
+    Uses a compact header so the form isn't crowded.
+  */
+  if (view === 'create-team') {
+    return (
+      <div className="page-wrapper">
+        <PageHeader team={currentTeam} teams={teams} compact />
+        <TeamCreator
+          db={db}
+          user={user}
+          onCreated={handleTeamCreated}
+          onCancel={() => setView('dashboard')}
+        />
+      </div>
+    )
+  }
+
+  /*
     Render setup/logger immediately — they don't need the fetched
     data, so we don't wait for loading to finish. GameLogger gets
     teamId so it can scope the games INSERT to the right team.
@@ -451,7 +470,7 @@ function App() {
     return (
       <div className="page-wrapper">
         <Confetti active={false} />
-        <PageHeader team={currentTeam} teams={teams} />
+        <PageHeader team={currentTeam} teams={teams} onCreateNew={() => setView('create-team')} />
         <div className="card" style={{ textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic' }}>
           Loading season data…
         </div>
@@ -463,7 +482,7 @@ function App() {
     return (
       <div className="page-wrapper">
         <Confetti active={false} />
-        <PageHeader team={currentTeam} teams={teams} />
+        <PageHeader team={currentTeam} teams={teams} onCreateNew={() => setView('create-team')} />
         <div className="card" style={{ textAlign: 'center', color: '#e57373' }}>
           {error}
         </div>
@@ -650,7 +669,7 @@ function App() {
      team  — the current team object ({ id, name, slug, season })
      teams — all teams (passed through to TeamSwitcher)
 ================================================================ */
-function PageHeader({ team, teams, compact = false }) {
+function PageHeader({ team, teams, compact = false, onCreateNew }) {
   // Defensive: during the very first render before teams load,
   // team is null. Show a placeholder so the layout doesn't jump.
   const teamName  = team ? team.name   : '…'
@@ -676,9 +695,15 @@ function PageHeader({ team, teams, compact = false }) {
       </div>
 
       {/* Team switcher sits below the title so it doesn't crowd the
-          pixel players. Hidden when there's only one team, and hidden
-          in compact mode (logger/roster screens). */}
-      {!compact && <TeamSwitcher teams={teams} currentSlug={team ? team.slug : ''} />}
+          pixel players. Hidden in compact mode (logger/roster screens).
+          onCreateNew wires up the "+ New Team" option in the dropdown. */}
+      {!compact && (
+        <TeamSwitcher
+          teams={teams}
+          currentSlug={team ? team.slug : ''}
+          onCreateNew={onCreateNew}
+        />
+      )}
 
       {/* Sign-out link — subtle, tucked below the team switcher */}
       <div className="header-signout">

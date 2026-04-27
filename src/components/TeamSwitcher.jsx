@@ -1,39 +1,58 @@
 /*
   TeamSwitcher.jsx
   ----------------
-  Small dropdown in the page header that lets the user jump between
-  teams. Selecting a team navigates to that team's URL (e.g. /ninjas
-  or /inter-milan).
+  Dropdown in the page header that lets the user jump between teams
+  or create a new one.
 
   Props:
     teams       — array of { id, name, slug } from the teams table
     currentSlug — the slug currently in the URL (so the dropdown
                   reflects the active team)
+    onCreateNew — callback fired when the user picks "+ New Team";
+                  App.jsx uses this to switch to the TeamCreator view
 */
 
 import { useNavigate } from 'react-router-dom'
 
-export default function TeamSwitcher({ teams, currentSlug }) {
+/*
+  Sentinel value used for the "+ New Team" option.
+  It's not a real slug so it won't accidentally match a team.
+*/
+const NEW_TEAM_SENTINEL = '__new__'
+
+export default function TeamSwitcher({ teams, currentSlug, onCreateNew }) {
 
   // useNavigate gives us a function we can call to change the URL
   // programmatically (without an <a> link).
   const navigate = useNavigate()
 
   /*
-    When the user picks a different team from the dropdown,
-    navigate to that team's URL. React Router will re-render App
-    with the new slug, which triggers a fresh data fetch.
+    When the user picks from the dropdown:
+      - Picking a real team → navigate to that team's URL
+      - Picking "+ New Team" → call onCreateNew (App shows TeamCreator)
   */
   function handleChange(e) {
-    const newSlug = e.target.value
-    if (newSlug !== currentSlug) {
-      navigate(`/${newSlug}`)
+    const value = e.target.value
+
+    if (value === NEW_TEAM_SENTINEL) {
+      // Don't navigate — let App.jsx handle the view switch.
+      // Because this select is controlled (value={currentSlug}),
+      // React will re-render it back to the current team automatically.
+      onCreateNew?.()
+      return
+    }
+
+    if (value !== currentSlug) {
+      navigate(`/${value}`)
     }
   }
 
-  // If there's only one team, there's nothing to switch to —
-  // skip rendering to keep the header clean.
-  if (!teams || teams.length < 2) return null
+  /*
+    Hide the switcher if there's only one team AND no onCreateNew handler —
+    nothing useful to show. If onCreateNew is provided we always render
+    so the user can reach "+ New Team" even from a single-team account.
+  */
+  if (!teams || (teams.length < 2 && !onCreateNew)) return null
 
   return (
     <div className="team-switcher">
@@ -51,6 +70,14 @@ export default function TeamSwitcher({ teams, currentSlug }) {
             {team.name}
           </option>
         ))}
+
+        {/* Divider + create option — only shown when a handler is wired up */}
+        {onCreateNew && (
+          <>
+            <option disabled>──────────</option>
+            <option value={NEW_TEAM_SENTINEL}>+ New Team</option>
+          </>
+        )}
       </select>
     </div>
   )
