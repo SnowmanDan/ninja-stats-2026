@@ -90,7 +90,8 @@ export default function Login({ db }) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                autoFocus
+                // autoFocus omitted — iOS suppresses the autofill suggestion
+                // bar when a field is programmatically focused; user tap triggers it fine
               />
 
               {error && <p className="login-error">{error}</p>}
