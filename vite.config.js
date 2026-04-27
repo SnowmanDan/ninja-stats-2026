@@ -47,6 +47,11 @@ export default defineConfig({
             handler: 'NetworkOnly',
           },
         ],
+        // When a new version deploys, activate the new service worker immediately
+        // instead of waiting for the user to close all tabs. Combined with
+        // autoUpdate above, this means users always get new code on the next reload.
+        skipWaiting: true,
+        clientsClaim: true,
       },
     }),
   ],
