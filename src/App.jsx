@@ -136,14 +136,6 @@ function App() {
   }
 
   /*
-    The signed-in user's role on the CURRENT team.
-    Used to gate edit/delete controls in TeamSettings and to decide
-    whether to show the "Team Settings" option in the switcher.
-    Null if userTeams hasn't loaded yet or there's no match.
-  */
-  const currentTeamRole = userTeams.find((m) => m.team_id === currentTeam?.id)?.role ?? null
-
-  /*
     Called by TeamSettings after a successful name/season UPDATE.
     Patches the in-memory teams list and currentTeam so the header and
     switcher update immediately without a full page reload.
@@ -442,6 +434,14 @@ function App() {
   }
 
   /* ---- Auth gate --------------------------------------------- */
+
+  /*
+    The signed-in user's role on the CURRENT team.
+    Placed here — after all state and hooks — so currentTeam and
+    userTeams are guaranteed to be initialized (avoids TDZ error).
+    Used to gate edit/delete controls in TeamSettings.
+  */
+  const currentTeamRole = userTeams.find((m) => m.team_id === currentTeam?.id)?.role ?? null
 
   // Still checking the stored session — show nothing to avoid a
   // flash of the login screen for users who are already signed in.
