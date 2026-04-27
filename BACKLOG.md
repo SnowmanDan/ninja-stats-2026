@@ -28,6 +28,7 @@ _Nothing in progress — pick something from Up Next!_
 - Player position tracking
 - Auto-capitalize opponent name field
 - **Delete team** — owner-only action in team settings; must cascade-delete all games, game_stats, players, and team_members rows; require a confirmation step (e.g. type the team name) to prevent accidental deletion
+- **Cookie-based session storage** — switch Supabase client's session storage from localStorage to cookies so magic link auth works when opening the app from the iOS home screen (PWA standalone mode); localStorage is not shared between Safari and the installed PWA, cookies are
 
 ---
 
