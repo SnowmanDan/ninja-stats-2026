@@ -27,6 +27,7 @@ _Nothing in progress — pick something from Up Next!_
 - Substitution tracking
 - Player position tracking
 - Auto-capitalize opponent name field
+- **Delete team** — owner-only action in team settings; must cascade-delete all games, game_stats, players, and team_members rows; require a confirmation step (e.g. type the team name) to prevent accidental deletion
 
 ---
 
