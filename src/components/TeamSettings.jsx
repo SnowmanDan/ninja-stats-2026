@@ -48,7 +48,7 @@ export default function TeamSettings({ db, user, team, userRole, onSaved, onDele
   /* ---- Invite state -------------------------------------------- */
   const [invites,       setInvites]       = useState([])
   const [inviteEmail,   setInviteEmail]   = useState('')
-  const [inviteRole,    setInviteRole]    = useState('parent')
+  const [inviteRole,    setInviteRole]    = useState('viewer')
   const [inviteSending, setInviteSending] = useState(false)
   const [inviteMsg,     setInviteMsg]     = useState(null) // null | 'sent' | 'duplicate' | 'error'
   const [inviteErr,     setInviteErr]     = useState('')
@@ -296,8 +296,8 @@ export default function TeamSettings({ db, user, team, userRole, onSaved, onDele
         <div className="card settings-card">
           <h2 className="settings-title">Invite someone</h2>
           <p className="settings-invite-desc">
-            They'll get an email with a link to join {team.name}.
-            Links expire after 7 days.
+            They'll get an email with a sign-in link. Once they sign in,
+            they'll have access to this team. Invites expire after 7 days.
           </p>
 
           <form onSubmit={handleSendInvite} className="settings-form">
@@ -322,8 +322,7 @@ export default function TeamSettings({ db, user, team, userRole, onSaved, onDele
               onChange={(e) => setInviteRole(e.target.value)}
             >
               {userRole === 'owner' && <option value="coach">Coach — can log games and edit roster</option>}
-              <option value="parent">Parent — can view stats only</option>
-              <option value="viewer">Viewer — can view stats only</option>
+              <option value="viewer">View Only — can view stats</option>
             </select>
 
             {inviteMsg === 'sent' && (

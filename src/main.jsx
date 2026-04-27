@@ -8,6 +8,7 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import App from './App'
 import AcceptInvite from './components/AcceptInvite'
+import AuthConfirm  from './components/AuthConfirm'
 
 /* ================================================================
    ROUTING
@@ -30,6 +31,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <Routes>
         {/* Default landing: send people to the Ninjas page */}
         <Route path="/" element={<Navigate to="/ninjas" replace />} />
+
+        {/* Magic link token exchange — email links here instead of directly to
+            Supabase's verify endpoint, so Apple Mail's link preview can't
+            prefetch and consume the token before the user taps it */}
+        <Route path="/auth/confirm" element={<AuthConfirm />} />
 
         {/* Invite acceptance — must be before /:teamSlug/* so React Router
             doesn't treat "accept-invite" as a team slug */}
