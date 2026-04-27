@@ -34,11 +34,12 @@ export default function Login({ db }) {
     const { error: authError } = await db.auth.signInWithOtp({
       email,
       options: {
-        // Use the full current URL (e.g. http://localhost:5173/ninjas) so
-        // Supabase redirects back to the same path. If we used just the
-        // origin (/), React Router would redirect to /ninjas and strip the
-        // ?code= param before Supabase could exchange it for a session.
-        emailRedirectTo: window.location.href,
+        // Use origin + pathname (e.g. http://localhost:5173/ninjas) so
+        // Supabase redirects back to the same path. We deliberately exclude
+        // the hash fragment — if the user landed here from an expired link,
+        // window.location.href would contain #error=otp_expired which would
+        // corrupt the new magic link's redirect URL.
+        emailRedirectTo: window.location.origin + window.location.pathname,
       },
     })
 
