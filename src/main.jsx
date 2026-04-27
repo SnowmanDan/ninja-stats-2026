@@ -7,6 +7,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import App from './App'
+import AcceptInvite from './components/AcceptInvite'
 
 /* ================================================================
    ROUTING
@@ -29,6 +30,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <Routes>
         {/* Default landing: send people to the Ninjas page */}
         <Route path="/" element={<Navigate to="/ninjas" replace />} />
+
+        {/* Invite acceptance — must be before /:teamSlug/* so React Router
+            doesn't treat "accept-invite" as a team slug */}
+        <Route path="/accept-invite" element={<AcceptInvite />} />
 
         {/* Team-scoped dashboard. The /* trailing pattern allows for
             future nested routes inside App without changing main.jsx. */}

@@ -1767,6 +1767,88 @@ footer {
   color: var(--text-primary);
 }
 
+/* ===== 20. INVITE SECTION (TeamSettings) ======================== */
+
+.settings-invite-desc {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Pending invites list */
+.invite-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.invite-list-heading {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 4px;
+}
+
+.invite-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: var(--bg-card-alt);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.invite-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.invite-email {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.invite-role-badge {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.invite-cancel-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 4px 6px;
+  flex-shrink: 0;
+  border-radius: 4px;
+}
+
+.invite-cancel-btn:hover {
+  color: #ef9a9a;
+  background: rgba(127, 29, 29, 0.2);
+}
+
+/* ===== 21. ACCEPT INVITE PAGE =================================== */
+
+.accept-invite-icon {
+  font-size: 2.5rem;
+  margin: 0 0 8px;
+}
+
 /* ===== 12. RESPONSIVE: LARGER SCREENS ==========================
    Mobile-first: base styles above target small screens.
    These overrides kick in once there's enough room to go bigger.
