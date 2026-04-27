@@ -15,12 +15,13 @@
 import { useNavigate } from 'react-router-dom'
 
 /*
-  Sentinel value used for the "+ New Team" option.
-  It's not a real slug so it won't accidentally match a team.
+  Sentinel values for non-navigation options.
+  Not real slugs so they won't accidentally match a team.
 */
-const NEW_TEAM_SENTINEL = '__new__'
+const SETTINGS_SENTINEL = '__settings__'
+const NEW_TEAM_SENTINEL  = '__new__'
 
-export default function TeamSwitcher({ teams, currentSlug, onCreateNew }) {
+export default function TeamSwitcher({ teams, currentSlug, onTeamSettings, onCreateNew }) {
 
   // useNavigate gives us a function we can call to change the URL
   // programmatically (without an <a> link).
@@ -28,16 +29,23 @@ export default function TeamSwitcher({ teams, currentSlug, onCreateNew }) {
 
   /*
     When the user picks from the dropdown:
-      - Picking a real team → navigate to that team's URL
-      - Picking "+ New Team" → call onCreateNew (App shows TeamCreator)
+      - Picking a real team    → navigate to that team's URL
+      - Picking "Team Settings"→ call onTeamSettings (App shows TeamSettings)
+      - Picking "+ New Team"   → call onCreateNew (App shows TeamCreator)
+
+    Because this select is controlled (value={currentSlug}), picking a
+    sentinel doesn't change the displayed value — React keeps it on the
+    current team once the handlers trigger a re-render.
   */
   function handleChange(e) {
     const value = e.target.value
 
+    if (value === SETTINGS_SENTINEL) {
+      onTeamSettings?.()
+      return
+    }
+
     if (value === NEW_TEAM_SENTINEL) {
-      // Don't navigate — let App.jsx handle the view switch.
-      // Because this select is controlled (value={currentSlug}),
-      // React will re-render it back to the current team automatically.
       onCreateNew?.()
       return
     }
@@ -48,11 +56,12 @@ export default function TeamSwitcher({ teams, currentSlug, onCreateNew }) {
   }
 
   /*
-    Hide the switcher if there's only one team AND no onCreateNew handler —
-    nothing useful to show. If onCreateNew is provided we always render
-    so the user can reach "+ New Team" even from a single-team account.
+    Hide the switcher when there's only one team and no action handlers —
+    nothing useful to show. As soon as any handler is wired up (settings
+    or create), we always render so those options are reachable.
   */
-  if (!teams || (teams.length < 2 && !onCreateNew)) return null
+  const hasActions = onTeamSettings || onCreateNew
+  if (!teams || (teams.length < 2 && !hasActions)) return null
 
   return (
     <div className="team-switcher">
@@ -71,13 +80,10 @@ export default function TeamSwitcher({ teams, currentSlug, onCreateNew }) {
           </option>
         ))}
 
-        {/* Divider + create option — only shown when a handler is wired up */}
-        {onCreateNew && (
-          <>
-            <option disabled>──────────</option>
-            <option value={NEW_TEAM_SENTINEL}>+ New Team</option>
-          </>
-        )}
+        {/* Management options — separated from team list by a divider */}
+        {hasActions && <option disabled>──────────</option>}
+        {onTeamSettings && <option value={SETTINGS_SENTINEL}>Team Settings</option>}
+        {onCreateNew    && <option value={NEW_TEAM_SENTINEL}>+ New Team</option>}
       </select>
     </div>
   )

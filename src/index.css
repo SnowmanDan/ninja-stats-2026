@@ -1635,6 +1635,138 @@ footer {
   opacity: 1;
 }
 
+/* ===== 19. TEAM SETTINGS ======================================== */
+
+.settings-card {
+  max-width: 400px;
+  margin: 24px auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.settings-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.settings-saved {
+  color: #66bb6a;  /* green */
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.settings-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.settings-cancel-btn {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.settings-cancel-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
+/* Read-only view for parents/viewers */
+.settings-readonly {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-readonly-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.settings-readonly-row strong {
+  color: var(--text-primary);
+}
+
+.settings-role-note {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 4px 0 0;
+}
+
+/* Danger zone card — red border to signal destructive territory */
+.settings-danger-zone {
+  max-width: 400px;
+  margin: 16px auto 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid #7f1d1d;  /* deep red border */
+}
+
+.settings-danger-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ef9a9a;  /* soft red — visible but not alarming until you act */
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.settings-danger-desc {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* The "Delete Team…" button — outlined red, not filled, until confirmation */
+.settings-delete-btn {
+  background: transparent;
+  color: #ef9a9a;
+  border: 1px solid #7f1d1d;
+  align-self: flex-start;
+}
+
+.settings-delete-btn:hover:not(:disabled) {
+  background: #7f1d1d;
+  color: #fff;
+}
+
+.settings-delete-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Confirmation sub-section */
+.settings-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-confirm-prompt {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.settings-confirm-prompt strong {
+  color: var(--text-primary);
+}
+
 /* ===== 12. RESPONSIVE: LARGER SCREENS ==========================
    Mobile-first: base styles above target small screens.
    These overrides kick in once there's enough room to go bigger.

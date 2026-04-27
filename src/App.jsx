@@ -23,8 +23,9 @@ import './index.css'
   by any component (Login, App, etc.) without recreating the connection.
 */
 import { db } from './supabase'
-import Login       from './components/Login'
-import TeamCreator from './components/TeamCreator'
+import Login        from './components/Login'
+import TeamCreator  from './components/TeamCreator'
+import TeamSettings from './components/TeamSettings'
 
 import Confetti      from './components/Confetti'
 import GameHistory   from './components/GameHistory'
@@ -132,6 +133,61 @@ function App() {
     setUserTeams(data || [])
     // Hard reload so the full teams list re-fetches with the new team included
     window.location.href = `/${slug}`
+  }
+
+  /*
+    The signed-in user's role on the CURRENT team.
+    Used to gate edit/delete controls in TeamSettings and to decide
+    whether to show the "Team Settings" option in the switcher.
+    Null if userTeams hasn't loaded yet or there's no match.
+  */
+  const currentTeamRole = userTeams.find((m) => m.team_id === currentTeam?.id)?.role ?? null
+
+  /*
+    Called by TeamSettings after a successful name/season UPDATE.
+    Patches the in-memory teams list and currentTeam so the header and
+    switcher update immediately without a full page reload.
+  */
+  function handleTeamSaved({ name, season }) {
+    setTeams((prev) =>
+      prev.map((t) => t.id === currentTeam.id ? { ...t, name, season } : t)
+    )
+    setCurrentTeam((prev) => ({ ...prev, name, season }))
+    setView('dashboard')
+  }
+
+  /*
+    Called by TeamSettings after all team data is deleted.
+    Finds the first remaining team and navigates there, or goes to the
+    root (which shows TeamCreator) if the user has no teams left.
+  */
+  async function handleTeamDeleted() {
+    const { data: memberRows } = await db
+      .from('team_members')
+      .select('team_id, role')
+      .eq('user_id', user.id)
+
+    const remaining = memberRows || []
+
+    if (remaining.length === 0) {
+      // No teams left — root redirects to /ninjas but the userTeams===0
+      // gate in App will intercept and show TeamCreator before any slug matching
+      window.location.href = window.location.origin + '/'
+      return
+    }
+
+    // Navigate to the first remaining team
+    const { data: nextTeams } = await db
+      .from('teams')
+      .select('slug')
+      .in('id', remaining.map((m) => m.team_id))
+      .order('id')
+      .limit(1)
+
+    const nextSlug = nextTeams?.[0]?.slug
+    window.location.href = nextSlug
+      ? `${window.location.origin}/${nextSlug}`
+      : window.location.origin + '/'
   }
 
   /* ---- State -------------------------------------------------- */
@@ -403,6 +459,27 @@ function App() {
   /* ---- Non-dashboard views ------------------------------------ */
 
   /*
+    User tapped "Team Settings" in the TeamSwitcher.
+    Shows TeamSettings for name/season editing and (owners only) deletion.
+  */
+  if (view === 'team-settings') {
+    return (
+      <div className="page-wrapper">
+        <PageHeader team={currentTeam} teams={teams} compact />
+        <TeamSettings
+          db={db}
+          user={user}
+          team={currentTeam}
+          userRole={currentTeamRole}
+          onSaved={handleTeamSaved}
+          onDeleted={handleTeamDeleted}
+          onCancel={() => setView('dashboard')}
+        />
+      </div>
+    )
+  }
+
+  /*
     Existing user tapped "+ New Team" in the TeamSwitcher.
     Reuse TeamCreator with an onCancel so they can back out.
     Uses a compact header so the form isn't crowded.
@@ -470,7 +547,7 @@ function App() {
     return (
       <div className="page-wrapper">
         <Confetti active={false} />
-        <PageHeader team={currentTeam} teams={teams} onCreateNew={() => setView('create-team')} />
+        <PageHeader team={currentTeam} teams={teams} onTeamSettings={() => setView('team-settings')} onCreateNew={() => setView('create-team')} />
         <div className="card" style={{ textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic' }}>
           Loading season data…
         </div>
@@ -482,7 +559,7 @@ function App() {
     return (
       <div className="page-wrapper">
         <Confetti active={false} />
-        <PageHeader team={currentTeam} teams={teams} onCreateNew={() => setView('create-team')} />
+        <PageHeader team={currentTeam} teams={teams} onTeamSettings={() => setView('team-settings')} onCreateNew={() => setView('create-team')} />
         <div className="card" style={{ textAlign: 'center', color: '#e57373' }}>
           {error}
         </div>
@@ -669,7 +746,7 @@ function App() {
      team  — the current team object ({ id, name, slug, season })
      teams — all teams (passed through to TeamSwitcher)
 ================================================================ */
-function PageHeader({ team, teams, compact = false, onCreateNew }) {
+function PageHeader({ team, teams, compact = false, onTeamSettings, onCreateNew }) {
   // Defensive: during the very first render before teams load,
   // team is null. Show a placeholder so the layout doesn't jump.
   const teamName  = team ? team.name   : '…'
@@ -696,11 +773,12 @@ function PageHeader({ team, teams, compact = false, onCreateNew }) {
 
       {/* Team switcher sits below the title so it doesn't crowd the
           pixel players. Hidden in compact mode (logger/roster screens).
-          onCreateNew wires up the "+ New Team" option in the dropdown. */}
+          onTeamSettings and onCreateNew wire up the management options. */}
       {!compact && (
         <TeamSwitcher
           teams={teams}
           currentSlug={team ? team.slug : ''}
+          onTeamSettings={onTeamSettings}
           onCreateNew={onCreateNew}
         />
       )}
