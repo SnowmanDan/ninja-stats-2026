@@ -84,7 +84,7 @@ export default function Login({ db }) {
     <header>
       <div className="header-inner">
         <div className="header-center">
-          <h1 className="team-name">Ninja Stats</h1>
+          <h1 className="team-name">Statsy</h1>
           <p className="season-label">Spring 2026 Season</p>
         </div>
       </div>

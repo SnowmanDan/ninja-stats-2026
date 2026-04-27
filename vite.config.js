@@ -14,7 +14,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate', // automatically update the service worker when a new version deploys
       manifest: {
-        name: 'Ninja Stats',
+        name: 'Statsy',
         short_name: 'Ninjas',
         description: 'Live sideline stat tracker for the Ninjas soccer team',
         theme_color: '#0d0d0d',
