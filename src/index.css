@@ -1613,6 +1613,15 @@ footer {
   font-style: italic;
 }
 
+/* 6-digit OTP code input — big, centered, monospace so digits line up */
+.login-code-input {
+  font-size: 2rem;
+  font-family: 'Courier New', Courier, monospace;
+  letter-spacing: 0.4em;
+  text-align: center;
+  padding: 14px;
+}
+
 /* ===== 18. SIGN OUT BUTTON ====================================== */
 
 .header-signout {
