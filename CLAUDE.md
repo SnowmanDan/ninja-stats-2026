@@ -49,7 +49,10 @@ soccer-stats/
 │       ├── Roster.jsx            # Team roster table
 │       ├── RosterEditor.jsx      # Add/edit/delete players (Manage Roster screen)
 │       ├── SeasonSummary.jsx     # Aggregate season totals
-│       └── StatsTable.jsx        # Per-player stat breakdown for a selected game
+│       ├── StatsTable.jsx        # Per-player stat breakdown for a selected game
+│       ├── TeamCreator.jsx       # New team setup screen (new users + existing users via switcher)
+│       ├── TeamSettings.jsx      # Edit team name/season; owner-only delete with type-to-confirm
+│       └── TeamSwitcher.jsx      # Dropdown: switch teams, Team Settings, + New Team
 ├── supabase/migrations/          # SQL migration files (run manually in Supabase SQL editor)
 ├── favicon.svg
 ├── robots.txt
@@ -77,11 +80,15 @@ soccer-stats/
 ## Auth (Phase 4 — in progress)
 - **Method:** Supabase magic link (email OTP) — no password required
 - **Flow:** User enters email → Supabase sends magic link → click link → signed in automatically
-- **Session:** stored by Supabase client; persists across page reloads
-- **Gate:** `App.jsx` checks `db.auth.getSession()` on load; shows `<Login />` if no session
+- **Auth flow type:** `implicit` (not PKCE) — token is in the URL fragment so it works across browser contexts (Safari vs Chrome vs installed PWA); set in `src/supabase.js` via `createClient` options
+- **Session:** stored by Supabase client in localStorage; persists across page reloads
+- **Gate:** `App.jsx` checks `db.auth.getSession()` on load; shows `<Login />` if no session; shows `<TeamCreator />` if user has no team memberships
 - **Sign out:** button in dashboard header calls `db.auth.signOut()`
-- **Redirect URL:** `emailRedirectTo` is set to `window.location.href` (current page) so React Router doesn't strip the `?code=` param on redirect
-- **Supabase dashboard settings:** Authentication → URL Configuration → Site URL must match the app URL (`http://localhost:5173` for dev, Vercel URL for prod); `http://localhost:5173/**` must be in Redirect URLs allowlist
+- **Redirect URL:** `emailRedirectTo` is set to `window.location.href` (current page URL)
+- **Email delivery:** Resend SMTP wired into both prod and dev Supabase (no rate limits); configured under Authentication → SMTP Settings in the Supabase dashboard
+- **Supabase dashboard settings:** Authentication → URL Configuration → Site URL + Redirect URLs must include the app URL; `https://*.vercel.app/**` covers all Vercel preview URLs
+- **Team membership gate:** after auth, App fetches `team_members` rows for the user; zero rows → `<TeamCreator />`; one or more → normal dashboard
+- **Roles:** owner (full access + delete team), coach (read/write), parent/viewer (read-only)
 
 ## Supabase Storage
 - Bucket: `game-photos` (public) — must be created manually in each Supabase project
@@ -108,7 +115,12 @@ soccer-stats/
 
 ## Header behavior
 - **Dashboard:** full header with pixel player graphics, team switcher dropdown, and sign-out button
-- **Logger / GameSetup / RosterEditor:** compact header (smaller text, no pixel players, no team switcher) to maximize screen space for actions
+- **Logger / GameSetup / RosterEditor / TeamSettings / TeamCreator:** compact header (smaller text, no pixel players, no team switcher) to maximize screen space for actions
+
+## Team Management
+- **TeamSwitcher dropdown** (dashboard only): lists all teams the user belongs to; bottom section has "Team Settings" and "+ New Team" separated by a divider
+- **TeamSettings screen:** edit team name and season (owners + coaches); danger zone with type-to-confirm delete (owners only); cascade-deletes game_stats → games → players → team_members → teams in FK order; navigates to next remaining team after delete or shows TeamCreator if none left
+- **TeamCreator screen:** shown automatically to new users with zero team memberships; also reachable via "+ New Team" in the switcher for existing users; Cancel button shown when accessed by existing users
 
 ## Environment Variables
 Supabase credentials are read from environment variables — never hardcoded.

@@ -26,8 +26,6 @@ _Nothing in progress — pick something from Up Next!_
 - Timestamps on game events (Phase 2 — `game_events` table)
 - Substitution tracking
 - Player position tracking
-- Auto-capitalize opponent name field
-- **Delete team** — owner-only action in team settings; must cascade-delete all games, game_stats, players, and team_members rows; require a confirmation step (e.g. type the team name) to prevent accidental deletion
 - **Cookie-based session storage** — switch Supabase client's session storage from localStorage to cookies so magic link auth works when opening the app from the iOS home screen (PWA standalone mode); localStorage is not shared between Safari and the installed PWA, cookies are
 
 ---
@@ -57,3 +55,8 @@ _Nothing in progress — pick something from Up Next!_
 - Wire up `created_by` / `owner_id` — new games and players stamped with creating user's ID; existing teams backfilled via SQL
 - Team creation flow — new users create their own team via UI; added to team_members as owner
 - Tighten RLS — ownership checks via get_my_team_ids() security definer function; coaches/owners write, parents/viewers read-only
+- Team Settings screen — edit team name/season (owners + coaches); delete team with type-to-confirm cascade delete (owners only)
+- "+ New Team" option in TeamSwitcher dropdown for existing users
+- Resend SMTP — custom email provider wired into prod + dev Supabase; eliminates magic link rate limits
+- Implicit auth flow — switched from PKCE to implicit so magic links work across browser contexts (Safari vs PWA vs Chrome)
+- Service worker auto-update — skipWaiting + clientsClaim so new deploys activate immediately without manual cache clearing
