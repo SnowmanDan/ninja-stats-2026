@@ -671,7 +671,7 @@ function App() {
   return (
     <div className="page-wrapper">
       <Confetti active={isLastGameWin} />
-      <PageHeader team={currentTeam} teams={teams} />
+      <PageHeader team={currentTeam} teams={teams} onTeamSettings={() => setView('team-settings')} onCreateNew={() => setView('create-team')} />
 
       {savedDraft && (
         <div className="card draft-recovery-card">
