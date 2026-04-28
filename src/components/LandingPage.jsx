@@ -185,92 +185,131 @@ export default function LandingPage() {
   )
 }
 
-/* ── Ninja SVG ──────────────────────────────────────────────────────────── */
+/* ── Pixel-art Ninja in a Game Boy frame ───────────────────────────────── */
 function NinjaSVG() {
+  const PS = 10  // each "pixel" is 10×10 SVG units
+
+  // Color palette — Game Boy 4-green + red accent (GBC style)
+  const COLORS = {
+    K: '#0f380f',  // darkest green  — ninja body, ball dark patches
+    W: '#8bac0f',  // light green    — eye mask, ball light patches
+    R: '#dd2222',  // red            — headband, kicking boot
+    w: '#8bac0f',  // ball white     — same as W
+    b: '#0f380f',  // ball black     — same as K
+  }
+
+  // Hand-drawn 26×18 pixel sprite (each char = one pixel, '.' = transparent)
+  // Columns 0-12: ninja | Columns 15-25: soccer ball
+  const SPRITE = [
+    '.....KKKK.................', //  0  head top
+    '....KRRRKK................', //  1  red headband
+    '....KWWWKK................', //  2  eye mask (white strip)
+    '....KKWKWK................', //  3  eyes
+    '.....KKKK.................', //  4  chin
+    '....KKKKKK................', //  5  neck / upper body
+    '..KKKKKKKKKK..............', //  6  wide shoulders (arms out)
+    '....KKKKKK................', //  7  body
+    '....KKKK..KKKK............', //  8  hips + kicking leg begins
+    '...KK......KKKKKK.........', //  9  standing leg + kick extends
+    '...KK..........KKKRR.....b', // 10  kick reaches boot + ball edge
+    '..KKKK..........RRwwwbbwww', // 11  foot + red boot + ball starts
+    '..KK...........wwwwwwwbwww', // 12  standing leg + ball
+    '.KKK...........wwbwwwwwwww', // 13  foot widens + ball
+    '.KK............wwwwwwbwwww', // 14  ball
+    'KKK............wwwwwwwwwbw', // 15  big foot + ball
+    '...............bwwwwwwwwww', // 16  ball
+    '................wwwwwwwwww', // 17  ball bottom
+  ]
+
+  // Screen sits at (22, 18) inside the Game Boy frame
+  const SX = 22
+  const SY = 18
+
   return (
     <svg
-      viewBox="0 0 300 230"
+      viewBox="0 0 320 272"
       className="lp-ninja-svg"
-      aria-label="Cartoon ninja kicking a soccer ball"
+      aria-label="Pixel art ninja kicking a soccer ball on a Game Boy screen"
       role="img"
     >
-      {/* Motion / speed lines behind the ball */}
-      <g stroke="#cc0000" strokeWidth="3" strokeLinecap="round" opacity="0.75">
-        <line x1="178" y1="75"  x2="200" y2="62" />
-        <line x1="182" y1="100" x2="208" y2="100" />
-        <line x1="178" y1="125" x2="200" y2="138" />
+      {/* ── Game Boy outer shell ── */}
+      <rect width="320" height="272" rx="18" ry="18" fill="#b8b8a8" />
+      {/* Slight bevel shadow on bottom */}
+      <rect x="0" y="240" width="320" height="32" rx="18" fill="#a0a090" />
+
+      {/* ── Screen bezel ── */}
+      <rect x={SX - 8} y={SY - 8} width="292" height="200" rx="6" fill="#404035" />
+
+      {/* ── Screen (Game Boy green) ── */}
+      <rect x={SX} y={SY} width="276" height="184" fill="#9bbc0f" />
+
+      {/* ── Pixel art sprite ── */}
+      <g transform={`translate(${SX + 8}, ${SY + 2})`}>
+        {SPRITE.map((row, y) =>
+          [...row].map((char, x) => {
+            const fill = COLORS[char]
+            if (!fill) return null
+            return (
+              <rect
+                key={`${x}-${y}`}
+                x={x * PS} y={y * PS}
+                width={PS} height={PS}
+                fill={fill}
+              />
+            )
+          })
+        )}
       </g>
 
-      {/* ── Soccer ball ── */}
-      <g transform="translate(232, 100)">
-        {/* White base */}
-        <circle r="34" fill="white" stroke="#333" strokeWidth="2.5" />
-        {/* Centre pentagon (black) */}
-        <polygon points="0,-22 13,-8 8,11 -8,11 -13,-8" fill="#222" />
-        {/* Surrounding pentagons (slightly transparent) */}
-        <polygon points="13,-8 29,-12 31,6  19,17  8,11"  fill="#222" opacity="0.5" />
-        <polygon points="-13,-8 -29,-12 -31,6 -19,17 -8,11" fill="#222" opacity="0.5" />
-        <polygon points="8,11  19,17  13,31 -13,31 -19,17 -8,11" fill="#222" opacity="0.5" />
-        <polygon points="0,-22 -13,-8 -29,-12 -23,-29 0,-33" fill="#222" opacity="0.5" />
-        <polygon points="0,-22  13,-8  29,-12  23,-29 0,-33" fill="#222" opacity="0.5" />
-        {/* Highlight gloss */}
-        <ellipse cx="-10" cy="-14" rx="8" ry="5" fill="white" opacity="0.35" transform="rotate(-30 -10 -14)" />
+      {/* ── Scanline overlay for that CRT feel ── */}
+      {Array.from({ length: 92 }, (_, i) => (
+        <rect key={i}
+          x={SX} y={SY + i * 2}
+          width="276" height="1"
+          fill="#000" opacity="0.05"
+        />
+      ))}
+
+      {/* ── Screen glare in top-left corner ── */}
+      <rect x={SX} y={SY} width="276" height="50" fill="white" opacity="0.04" />
+
+      {/* ── Horizontal ridge between screen and controls ── */}
+      <rect x="0" y="210" width="320" height="6" fill="#a8a898" />
+
+      {/* ── D-pad ── */}
+      <g fill="#2a2a22">
+        <rect x="32" y="228" width="32" height="11" rx="3" />
+        <rect x="42" y="218" width="12" height="30" rx="3" />
+        <circle cx="48" cy="233" r="5" fill="#222218" />
       </g>
 
-      {/* ── Kicking leg (extended toward ball) ── */}
-      <line x1="104" y1="158" x2="198" y2="112"
-            stroke="#1a1a1a" strokeWidth="17" strokeLinecap="round" />
-      {/* Kicking boot (red) */}
-      <ellipse cx="201" cy="109" rx="18" ry="11"
-               fill="#cc0000" transform="rotate(-25 201 109)" />
+      {/* ── SELECT / START buttons ── */}
+      <rect x="108" y="236" width="28" height="7" rx="3.5" fill="#888878" />
+      <text x="122" y="242" textAnchor="middle" fill="#555548"
+            fontSize="4.5" fontFamily="monospace" fontWeight="bold">SELECT</text>
+      <rect x="152" y="236" width="28" height="7" rx="3.5" fill="#888878" />
+      <text x="166" y="242" textAnchor="middle" fill="#555548"
+            fontSize="4.5" fontFamily="monospace" fontWeight="bold">START</text>
 
-      {/* ── Body ── */}
-      <ellipse cx="88" cy="137" rx="24" ry="31" fill="#1a1a1a" />
+      {/* ── A / B buttons ── */}
+      <circle cx="272" cy="230" r="14" fill="#cc2244" />
+      <text x="272" y="234.5" textAnchor="middle" fill="white"
+            fontSize="10" fontFamily="monospace" fontWeight="bold">A</text>
+      <circle cx="244" cy="247" r="12" fill="#cc2244" />
+      <text x="244" y="251" textAnchor="middle" fill="white"
+            fontSize="10" fontFamily="monospace" fontWeight="bold">B</text>
 
-      {/* White belt stripe */}
-      <rect x="66" y="133" width="46" height="8" rx="4" fill="white" opacity="0.15" />
+      {/* ── Speaker grille (dots) ── */}
+      {[0,1,2,3,4].map(i => [0,1,2].map(j => (
+        <circle key={`sp-${i}-${j}`}
+          cx={292 + i * 5} cy={228 + j * 6}
+          r="1.5" fill="#909085" />
+      )))}
 
-      {/* ── Left arm (swinging back for balance) ── */}
-      <line x1="66" y1="118" x2="32" y2="93"
-            stroke="#1a1a1a" strokeWidth="14" strokeLinecap="round" />
-      <circle cx="30" cy="91" r="8" fill="#1a1a1a" />
-
-      {/* ── Right arm (reaching forward) ── */}
-      <line x1="110" y1="120" x2="143" y2="140"
-            stroke="#1a1a1a" strokeWidth="14" strokeLinecap="round" />
-      <circle cx="146" cy="142" r="7" fill="#1a1a1a" />
-
-      {/* ── Standing leg ── */}
-      <line x1="78" y1="166" x2="63" y2="212"
-            stroke="#1a1a1a" strokeWidth="17" strokeLinecap="round" />
-      {/* Standing foot */}
-      <ellipse cx="57" cy="215" rx="19" ry="9" fill="#1a1a1a" />
-
-      {/* ── Head ── */}
-      <circle cx="88" cy="70" r="30" fill="#1a1a1a" />
-
-      {/* Red headband */}
-      <path d="M59,63 Q88,45 117,63"
-            stroke="#cc0000" strokeWidth="10" fill="none" strokeLinecap="round" />
-      {/* Headband tail/knot on the right side */}
-      <path d="M117,63 L130,72 L123,82"
-            stroke="#cc0000" strokeWidth="7" fill="none"
-            strokeLinecap="round" strokeLinejoin="round" />
-
-      {/* White mask strip across eyes */}
-      <rect x="70" y="69" width="40" height="11" rx="5.5" fill="white" />
-
-      {/* Eyes (dark circles on white mask) */}
-      <circle cx="81"  cy="74.5" r="3.5" fill="#1a1a1a" />
-      <circle cx="99"  cy="74.5" r="3.5" fill="#1a1a1a" />
-
-      {/* Eye shine highlights */}
-      <circle cx="82.5" cy="73" r="1.2" fill="white" />
-      <circle cx="100.5" cy="73" r="1.2" fill="white" />
-
-      {/* Cloth wrapping detail on forehead */}
-      <path d="M59,63 Q65,68 70,66" stroke="#990000" strokeWidth="2" fill="none" opacity="0.5" />
-      <path d="M117,63 Q111,68 107,66" stroke="#990000" strokeWidth="2" fill="none" opacity="0.5" />
+      {/* ── STAT-NINJA branding on the body ── */}
+      <text x="160" y="264" textAnchor="middle" fill="#888878"
+            fontSize="8.5" fontFamily="monospace" fontWeight="bold"
+            letterSpacing="4">STAT-NINJA</text>
     </svg>
   )
 }
