@@ -63,7 +63,11 @@ export default function LandingPage() {
         </div>
 
         <div className="lp-hero-art">
-          <NinjaSVG />
+          <img
+            src="/ninja-hero.png"
+            alt="Cartoon ninja kicking a soccer ball"
+            className="lp-ninja-svg"
+          />
         </div>
       </section>
 
