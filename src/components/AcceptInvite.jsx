@@ -159,7 +159,7 @@ export default function AcceptInvite() {
       <header>
         <div className="header-inner">
           <div className="header-center">
-            <h1 className="team-name">Statsy</h1>
+            <h1 className="team-name">Stat-Ninja</h1>
           </div>
         </div>
       </header>

@@ -105,7 +105,7 @@ export default function TeamCreator({ db, user, onCreated, onCancel }) {
       <header>
         <div className="header-inner">
           <div className="header-center">
-            <h1 className="team-name">Statsy</h1>
+            <h1 className="team-name">Stat-Ninja</h1>
             <p className="season-label">Let's set up your team</p>
           </div>
         </div>
